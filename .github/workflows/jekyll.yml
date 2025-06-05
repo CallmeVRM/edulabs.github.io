@@ -6,16 +6,6 @@
 # Sample workflow for building and deploying a Jekyll site to GitHub Pages
 name: Deploy Jekyll site to Pages
 
-title: Edulabs
-description: Documentation simple et efficace
-theme: just-the-docs
-
-url: "https://callmevrm.github.io"
-baseurl: "/edulabs.github.io"  # si ton repo s'appelle ainsi
-
-aux_links:
-  Template Repository: https://github.com/callmevrm/edulabs.github.io
-
 
 on:
   # Runs on pushes targeting the default branch
