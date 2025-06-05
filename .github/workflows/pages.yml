@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages site
+name: Deploy Just the Docs via GitHub Actions
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Ruby
@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: bundle install
 
-      - name: Build the site with Jekyll
+      - name: Build site with Jekyll
         run: bundle exec jekyll build
 
       - name: Upload site artifact
