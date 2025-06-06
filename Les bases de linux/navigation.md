@@ -28,11 +28,14 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 {: .no_toc }
 
 ## Table des matières
-{: .no_toc .text-delta }
+{: .text-delta }
 
-- [1.  Vérifier où vous êtes](#1---vérifier-où-vous-êtes)
-- [2.  Se déplacer dans les répertoires : cd](#2---se-déplacer-dans-les-répertoires--cd)
+- [1. Position actuelle](#position)
+- [2. Se déplacer](#deplacement)
+- [3. Lister les fichiers](#liste)
+- [4. Revenir en arrière](#retour)
 
+##  Introduction
 
 Sur Linux, tout est fichier, et c’est organisé sous forme de dossiers (aussi appelés *répertoires*). Savoir où vous vous trouvez, comment aller ailleurs et comment revenir en arrière est **fondamental** pour pouvoir gérer des fichiers, exécuter des scripts ou installer des programmes.
 
@@ -50,8 +53,7 @@ popd                      # Revenez à votre dossier précédent (/tmp)
 
 ```
 
-## 1. Vérifier où vous êtes
-
+## 1. Position actuelle {#position}
 ```bash
 pwd
 ```
@@ -60,10 +62,9 @@ pwd
 
 **Pourquoi c’est utile ?**
 
-Parce que dans un terminal, **vous n’avez pas de fenêtre graphique**. Il est donc essentiel de **savoir où vous vous situez** avant de manipuler des fichiers, et dans certains cas, deux fichiers dans deux dossiers différents peuvent porter le même nom.
+Parce que dans un terminal, vous n’avez pas de fenêtre graphique. Il est donc essentiel de savoir où vous vous situez avant de manipuler des fichiers, et dans certains cas, deux fichiers dans deux dossiers différents peuvent porter le même nom.
 
-## 2. Se déplacer dans les répertoires : `cd`
-
+## 2. Se déplacer {#deplacement}
 La commande cd (change directory) est l'une des plus couramment utilisées en ligne de commande.
 Avant d'apprendre à l'utiliser efficacement, il est crucial de bien comprendre deux notions fondamentales : le chemin absolu et le chemin relatif.
 
@@ -161,7 +162,7 @@ En résumé, `cd ..` signifie littéralement :
 
 👉 Il existe d’autres moyens de naviguer plus rapidement dans l’arborescence, mais cela dépasse le cadre de ce chapitre.
 
-### ** 3. 👀 Explorer le contenu d’un dossier avec `ls` **
+## 3. Lister les fichiers {#liste}
 
 Une fois que vous savez **où vous êtes** (`pwd`) et **vous déplacer** (`cd`), il est essentiel de savoir **ce qu’il y a autour de vous**.
 
@@ -223,8 +224,7 @@ En résumé :
 | `ls -lha` | Affiche tout, y compris les fichiers cachés, avec des tailles lisibles |
 | `ls -l /etc` | Affiche le contenu détaillé d’un dossier spécifique (ici `/etc`) |
 
-### ** 4. 🧠  Naviguer intelligemment avec `pushd` et `popd` **
-
+## 4. Revenir en arrière {#retour}
 Lorsque vous travaillez dans le terminal, il est courant de devoir passer temporairement d’un dossier à un autre, puis de revenir exactement là où vous étiez.
 
 Plutôt que de mémoriser votre position actuelle ou de retaper manuellement le chemin, Linux vous propose deux commandes très pratiques : `pushd` et `popd`.
