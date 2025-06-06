@@ -3,7 +3,26 @@ layout: default
 title: Navigation
 parent: Les bases de Linux
 nav_order: 2
+
+
+
 ---
+
+<button class="btn js-toggle-dark-mode">Passer en mode nuit</button>
+
+<script>
+const toggleDarkMode = document.querySelector('.js-toggle-dark-mode');
+
+jtd.addEvent(toggleDarkMode, 'click', function(){
+  if (jtd.getTheme() === 'dark') {
+    jtd.setTheme('light');
+    toggleDarkMode.textContent = 'Preview dark color scheme';
+  } else {
+    jtd.setTheme('dark');
+    toggleDarkMode.textContent = 'Return to the light side';
+  }
+});
+</script>
 
 # Navigation
 
@@ -295,42 +314,14 @@ popd   # Tu reviens dans /etc/apache2/
 popd   # Tu reviens dans /var/www/html
 ```
 
+----------------------------------
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div dir="rtl">
-
-
-
-
-
-📖 لماذا يجب تعلم التنقل والتعامل مع الملفات؟
+### 📖 لماذا يجب تعلم التنقل والتعامل مع الملفات؟
 
 في نظام Linux، كل شيء يُعتبر ملفًا، ويتم تنظيمه في شكل مجلدات (تُعرف أيضًا بـ الدلائل). معرفة مكانك، كيفية الانتقال إلى مكان آخر، والعودة إلى الخلف أمرٌ أساسي لإدارة الملفات، تشغيل السكربتات، أو تثبيت البرامج.
 
 🔹 أوامر يجب حفظها:
-
-
-
-
-
-div
-
-
 
 ```bash
 pwd                       # يعرض المجلد الحالي / تحقق من موقعك الحالي
@@ -344,26 +335,27 @@ popd                      # العودة إلى المجلد السابق (/tmp)
 ```
 
 
-<div dir="rtl">
 ### 📍 التحقق من موقعك الحالي : 
-</div>
 
 ```bash
 pwd
 ```
-<div dir="rtl">
-
 pwd = print working directory → يعرض المسار الكامل للمجلد الذي تتواجد فيه حاليًا.
-</div>
 
-<div dir="rtl">
-
-لماذا هذا مفيد؟
+**لماذا هذا مفيد ؟**
 
 لأنه في (Terminal)، لا توجد واجهة رسومية GUI لذلك من الضروري أن تعرف موقعك الحالي قبل التعامل مع الملفات، في بعض الحالات، قد يكون هناك ملفان يحملان نفس الاسم لكن في مجلدين مختلفين.
 
-</div>
+2. 📁 التنقل إلى مجلد آخر: cd /tmp
 
+أمر cd (تغيير المجلد) من أكثر الأوامر استخدامًا في الطرفية.
+لكن لفهمه بشكل صحيح، يجب أولًا معرفة الفرق بين المسار المطلق والمسار النسبي.
+🔹 المسار المطلق
+
+المسار المطلق يبدأ دائمًا بشرطة مائلة / ويمثل جذر نظام الملفات.
+يعطي الموقع الكامل للمجلد أو الملف بغض النظر عن مكانك الحالي.
+
+مثال:
 
 
 
@@ -385,24 +377,7 @@ Contenu ici...
 
 Un exemple de surlignage `texte à surligner`.
 
-<button class="btn js-toggle-dark-mode">Passer en mode nuit</button>
 
-<script>
-const toggleDarkMode = document.querySelector('.js-toggle-dark-mode');
-
-jtd.addEvent(toggleDarkMode, 'click', function(){
-  if (jtd.getTheme() === 'dark') {
-    jtd.setTheme('light');
-    toggleDarkMode.textContent = 'Preview dark color scheme';
-  } else {
-    jtd.setTheme('dark');
-    toggleDarkMode.textContent = 'Return to the light side';
-  }
-});
-</script>
-
-{: .note }
-Ceci est une note
 
 ```scss
 ceci est un texte embedded
