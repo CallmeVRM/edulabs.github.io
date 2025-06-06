@@ -26,16 +26,13 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 
 # Navigation
 
-{:toc}
-## 1. 📍 Vérifier où vous êtes : `pwd`
+## Table des matières
+{: .no_toc .text-delta }
 
-## 2. 📁 Se déplacer : `cd`
-
-## 3. 👀 Explorer avec `ls`
-
-## 4. 🧠 Aller-retour avec `pushd` / `popd`
-
-## 📖 **Pourquoi apprendre à naviguer et manipuler les fichiers ?**
+- [1. 📍 Vérifier où vous êtes : `pwd`](#1--📍-vérifier-où-vous-êtes--pwd)
+- [2. 📁 Se déplacer dans les répertoires : `cd`](#2--📁-se-déplacer-dans-les-répertoires--cd)
+- [3. 👀 Explorer avec `ls`](#3--👀-explorer-avec-ls)
+- [4. 🔁 Revenir rapidement avec `pushd` / `popd`](#4--🔁-revenir-rapidement-avec-pushd--popd)
 
 Sur Linux, tout est fichier, et c’est organisé sous forme de dossiers (aussi appelés *répertoires*). Savoir où vous vous trouvez, comment aller ailleurs et comment revenir en arrière est **fondamental** pour pouvoir gérer des fichiers, exécuter des scripts ou installer des programmes.
 
