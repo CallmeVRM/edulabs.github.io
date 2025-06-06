@@ -26,6 +26,15 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 
 # Navigation
 
+{:toc}
+## 1. 📍 Vérifier où vous êtes : `pwd`
+
+## 2. 📁 Se déplacer : `cd`
+
+## 3. 👀 Explorer avec `ls`
+
+## 4. 🧠 Aller-retour avec `pushd` / `popd`
+
 ## 📖 **Pourquoi apprendre à naviguer et manipuler les fichiers ?**
 
 Sur Linux, tout est fichier, et c’est organisé sous forme de dossiers (aussi appelés *répertoires*). Savoir où vous vous trouvez, comment aller ailleurs et comment revenir en arrière est **fondamental** pour pouvoir gérer des fichiers, exécuter des scripts ou installer des programmes.
@@ -44,7 +53,7 @@ popd                      # Revenez à votre dossier précédent (/tmp)
 
 ```
 
-### 1. 📍 Vérifier où vous êtes : `pwd`
+### **1. 📍 Vérifier où vous êtes : `pwd`**
 
 ```bash
 pwd
@@ -56,7 +65,7 @@ pwd
 
 Parce que dans un terminal, **vous n’avez pas de fenêtre graphique**. Il est donc essentiel de **savoir où vous vous situez** avant de manipuler des fichiers, et dans certains cas, deux fichiers dans deux dossiers différents peuvent porter le même nom.
 
-### 2. 📁 Se déplacer dans un autre dossier : `cd /tmp`
+### **2. 📁 Se déplacer dans un autre dossier : `cd /tmp`**
 
 La commande cd (change directory) est l'une des plus couramment utilisées en ligne de commande.
 Avant d'apprendre à l'utiliser efficacement, il est crucial de bien comprendre deux notions fondamentales : le chemin absolu et le chemin relatif.
@@ -155,7 +164,7 @@ En résumé, `cd ..` signifie littéralement :
 
 👉 Il existe d’autres moyens de naviguer plus rapidement dans l’arborescence, mais cela dépasse le cadre de ce chapitre.
 
-### 3. 👀 Explorer le contenu d’un dossier avec `ls`
+### ** 3. 👀 Explorer le contenu d’un dossier avec `ls` **
 
 Une fois que vous savez **où vous êtes** (`pwd`) et **vous déplacer** (`cd`), il est essentiel de savoir **ce qu’il y a autour de vous**.
 
@@ -217,7 +226,7 @@ En résumé :
 | `ls -lha` | Affiche tout, y compris les fichiers cachés, avec des tailles lisibles |
 | `ls -l /etc` | Affiche le contenu détaillé d’un dossier spécifique (ici `/etc`) |
 
-### 4. 🧠  Naviguer intelligemment avec `pushd` et `popd`
+### ** 4. 🧠  Naviguer intelligemment avec `pushd` et `popd` **
 
 Lorsque vous travaillez dans le terminal, il est courant de devoir passer temporairement d’un dossier à un autre, puis de revenir exactement là où vous étiez.
 
