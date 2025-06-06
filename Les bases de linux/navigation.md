@@ -11,7 +11,7 @@ Contenu ici...
 
 Un exemple de surlignage `texte à surligner`.
 
-<button class="btn js-toggle-dark-mode">Preview dark color scheme</button>
+<button class="btn js-toggle-dark-mode">Passer en mode nuit</button>
 
 <script>
 const toggleDarkMode = document.querySelector('.js-toggle-dark-mode');
@@ -26,3 +26,10 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
   }
 });
 </script>
+
+{: .note }
+Ceci est une note
+
+```scss
+ceci est un texte embedded
+```
