@@ -25,14 +25,15 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 </script>
 
 # Navigation
+{: .no_toc }
 
 ## Table des matières
 {: .no_toc .text-delta }
 
-- [1. 📍 Vérifier où vous êtes : `pwd`](#1--📍-vérifier-où-vous-êtes--pwd)
-- [2. 📁 Se déplacer dans les répertoires : `cd`](#2--📁-se-déplacer-dans-les-répertoires--cd)
-- [3. 👀 Explorer avec `ls`](#3--👀-explorer-avec-ls)
-- [4. 🔁 Revenir rapidement avec `pushd` / `popd`](#4--🔁-revenir-rapidement-avec-pushd--popd)
+- [1. 📍 Vérifier où vous êtes](#1--📍-vérifier-où-vous-êtes)
+- [2. 📁 Se déplacer dans les répertoires : cd](#2--📁-se-déplacer-dans-les-répertoires--cd)
+
+
 
 Sur Linux, tout est fichier, et c’est organisé sous forme de dossiers (aussi appelés *répertoires*). Savoir où vous vous trouvez, comment aller ailleurs et comment revenir en arrière est **fondamental** pour pouvoir gérer des fichiers, exécuter des scripts ou installer des programmes.
 
@@ -50,7 +51,7 @@ popd                      # Revenez à votre dossier précédent (/tmp)
 
 ```
 
-### **1. 📍 Vérifier où vous êtes : `pwd`**
+## 1. 📍 Vérifier où vous êtes
 
 ```bash
 pwd
@@ -62,7 +63,7 @@ pwd
 
 Parce que dans un terminal, **vous n’avez pas de fenêtre graphique**. Il est donc essentiel de **savoir où vous vous situez** avant de manipuler des fichiers, et dans certains cas, deux fichiers dans deux dossiers différents peuvent porter le même nom.
 
-### **2. 📁 Se déplacer dans un autre dossier : `cd /tmp`**
+## 2. 📁 Se déplacer dans les répertoires : `cd`
 
 La commande cd (change directory) est l'une des plus couramment utilisées en ligne de commande.
 Avant d'apprendre à l'utiliser efficacement, il est crucial de bien comprendre deux notions fondamentales : le chemin absolu et le chemin relatif.
