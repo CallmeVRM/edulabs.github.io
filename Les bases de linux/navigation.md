@@ -155,7 +155,7 @@ En résumé, `cd ..` signifie littéralement :
 
 👉 Il existe d’autres moyens de naviguer plus rapidement dans l’arborescence, mais cela dépasse le cadre de ce chapitre.
 
-### 📂 Explorer le contenu d’un dossier avec `ls`
+### 3. 👀 Explorer le contenu d’un dossier avec `ls`
 
 Une fois que vous savez **où vous êtes** (`pwd`) et **vous déplacer** (`cd`), il est essentiel de savoir **ce qu’il y a autour de vous**.
 
@@ -207,8 +207,7 @@ Cette commande vous permet de **consulter le contenu d’un répertoire spécifi
 
 Vous pouvez utiliser cette méthode pour jeter un œil rapide à n’importe quel dossier du système.
 
-> 🧠 Pratique quand on veut juste consulter le contenu d’un répertoire sans quitter celui où l’on est.
-> 
+>  Pratique quand on veut juste consulter le contenu d’un répertoire sans quitter celui où l’on est.
 
 En résumé :
 
@@ -218,7 +217,7 @@ En résumé :
 | `ls -lha` | Affiche tout, y compris les fichiers cachés, avec des tailles lisibles |
 | `ls -l /etc` | Affiche le contenu détaillé d’un dossier spécifique (ici `/etc`) |
 
-### 🔄 Naviguer intelligemment avec `pushd` et `popd`
+### 4. 🧠  Naviguer intelligemment avec `pushd` et `popd`
 
 Lorsque vous travaillez dans le terminal, il est courant de devoir passer temporairement d’un dossier à un autre, puis de revenir exactement là où vous étiez.
 
@@ -273,9 +272,9 @@ Vous pouvez utiliser `pushd` et `popd` pour simplifier le tout :
 pushd /var/log
 ```
 
-✔️ Cela vous déplace dans `/var/log`
+👉 Cela vous déplace dans `/var/log`
 
-✔️ Et **mémorise** automatiquement votre position précédente dans une pile (ici `/etc/apache2/sites-available`)
+👉 Et **mémorise** automatiquement votre position précédente dans une pile (ici `/etc/apache2/sites-available`)
 
 📝 Vous consultez les logs, par exemple :
 
@@ -317,68 +316,4 @@ popd   # Tu reviens dans /var/www/html
 ----------------------------------
 
 
-### 📖 لماذا يجب تعلم التنقل والتعامل مع الملفات؟
 
-في نظام Linux، كل شيء يُعتبر ملفًا، ويتم تنظيمه في شكل مجلدات (تُعرف أيضًا بـ الدلائل). معرفة مكانك، كيفية الانتقال إلى مكان آخر، والعودة إلى الخلف أمرٌ أساسي لإدارة الملفات، تشغيل السكربتات، أو تثبيت البرامج.
-
-🔹 أوامر يجب حفظها:
-
-```bash
-pwd                       # يعرض المجلد الحالي / تحقق من موقعك الحالي
-cd /tmp                   # انتقل إلى مجلد /tmp
-cd ..                     # العودة إلى المجلد السابق (النقطتان تعنيان العودة للخلف)
-ls -l                     # عرض محتوى الدليل الحالي بنمط القائمة
-ls -lha                   # عرض المحتوى بما في ذلك الملفات المخفية
-ls -l /etc                # عرض محتوى دليل /etc بنمط القائمة
-pushd /etc                # الانتقال إلى /etc مع حفظ /tmp في المكدس
-popd                      # العودة إلى المجلد السابق (/tmp)
-```
-
-
-### 📍 التحقق من موقعك الحالي : 
-
-```bash
-pwd
-```
-pwd = print working directory → يعرض المسار الكامل للمجلد الذي تتواجد فيه حاليًا.
-
-**لماذا هذا مفيد ؟**
-
-لأنه في (Terminal)، لا توجد واجهة رسومية GUI لذلك من الضروري أن تعرف موقعك الحالي قبل التعامل مع الملفات، في بعض الحالات، قد يكون هناك ملفان يحملان نفس الاسم لكن في مجلدين مختلفين.
-
-2. 📁 التنقل إلى مجلد آخر: cd /tmp
-
-أمر cd (تغيير المجلد) من أكثر الأوامر استخدامًا في الطرفية.
-لكن لفهمه بشكل صحيح، يجب أولًا معرفة الفرق بين المسار المطلق والمسار النسبي.
-🔹 المسار المطلق
-
-المسار المطلق يبدأ دائمًا بشرطة مائلة / ويمثل جذر نظام الملفات.
-يعطي الموقع الكامل للمجلد أو الملف بغض النظر عن مكانك الحالي.
-
-مثال:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Contenu ici...
-
-Un exemple de surlignage `texte à surligner`.
-
-
-
-```scss
-ceci est un texte embedded
-```
