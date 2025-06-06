@@ -30,10 +30,10 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 ## Table des matières
 {: .text-delta }
 
-- [1. Position actuelle](#position)
-- [2. Se déplacer](#deplacement)
-- [3. Lister les fichiers](#liste)
-- [4. Revenir en arrière](#retour)
+- [1. Position actuelle, vérifier où vous êtes :](#position)
+- [2. Se déplacer dans l'environnement Linux](#deplacement)
+- [3. Explorer le contenu d’un dossier avec ls](#liste)
+- [4. Astuces pour aller plus vite ](#pushdpopd)
 
 ##  Introduction
 
@@ -53,7 +53,7 @@ popd                      # Revenez à votre dossier précédent (/tmp)
 
 ```
 
-## 1. Position actuelle {#position}
+## 1. Position actuelle, vérifier où vous êtes {#position}
 ```bash
 pwd
 ```
@@ -64,7 +64,7 @@ pwd
 
 Parce que dans un terminal, vous n’avez pas de fenêtre graphique. Il est donc essentiel de savoir où vous vous situez avant de manipuler des fichiers, et dans certains cas, deux fichiers dans deux dossiers différents peuvent porter le même nom.
 
-## 2. Se déplacer {#deplacement}
+## 2. Se déplacer dans l'environnement Linux {#deplacement}
 La commande cd (change directory) est l'une des plus couramment utilisées en ligne de commande.
 Avant d'apprendre à l'utiliser efficacement, il est crucial de bien comprendre deux notions fondamentales : le chemin absolu et le chemin relatif.
 
@@ -162,7 +162,7 @@ En résumé, `cd ..` signifie littéralement :
 
 👉 Il existe d’autres moyens de naviguer plus rapidement dans l’arborescence, mais cela dépasse le cadre de ce chapitre.
 
-## 3. Lister les fichiers {#liste}
+## 3. Explorer le contenu d’un dossier avec ls {#liste}
 
 Une fois que vous savez **où vous êtes** (`pwd`) et **vous déplacer** (`cd`), il est essentiel de savoir **ce qu’il y a autour de vous**.
 
@@ -224,7 +224,7 @@ En résumé :
 | `ls -lha` | Affiche tout, y compris les fichiers cachés, avec des tailles lisibles |
 | `ls -l /etc` | Affiche le contenu détaillé d’un dossier spécifique (ici `/etc`) |
 
-## 4. Revenir en arrière {#retour}
+## 4. Astuce pour aller plus vite {#pushdpopd}
 Lorsque vous travaillez dans le terminal, il est courant de devoir passer temporairement d’un dossier à un autre, puis de revenir exactement là où vous étiez.
 
 Plutôt que de mémoriser votre position actuelle ou de retaper manuellement le chemin, Linux vous propose deux commandes très pratiques : `pushd` et `popd`.
