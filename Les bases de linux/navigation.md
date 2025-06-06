@@ -24,7 +24,7 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 });
 </script>
 
-# Navigation
+# Navigation 
 {: .no_toc }
 
 ## Table des matières
