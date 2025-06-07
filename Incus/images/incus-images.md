@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Navigation
+title: Incus - Images
 parent: Images
 grand_parent: Incus
 nav_order: 2
