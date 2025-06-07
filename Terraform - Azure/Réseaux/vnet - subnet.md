@@ -1,9 +1,8 @@
 ---
 layout: default
-title: vnet-subnet
-parent: Réseaux
-nav_order: 201
-
+title: VNet & Subnet
+parent: Terraform - Azure Réseaux
+nav_order: 1
 ---
 
 <button class="btn js-toggle-dark-mode">Activer le mode sombre</button>

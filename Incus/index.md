@@ -1,10 +1,8 @@
 ---
 layout: default
 title: Incus
+nav_order: 100
 has_children: true
-nav_order: 300
-permalink: /Incus/
-
 ---
 
 # Les bases de Linux

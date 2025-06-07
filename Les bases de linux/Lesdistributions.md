@@ -2,8 +2,7 @@
 layout: default
 title: Les distributions
 parent: Les bases de Linux
-nav_order: 21
-permalink: /Les-bases-de-linux/Lesdistributions/
+nav_order: 1
 ---
 
 # Les Distributions

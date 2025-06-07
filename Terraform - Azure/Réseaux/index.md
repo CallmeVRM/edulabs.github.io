@@ -1,7 +1,6 @@
 ---
 layout: default
-title: Terraform Azure
-nav_order: 200
+title: Terraform - Azure Réseaux
+nav_order: 300
 has_children: true
-permalink: /
 ---

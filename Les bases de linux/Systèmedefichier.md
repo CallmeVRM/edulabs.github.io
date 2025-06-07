@@ -2,8 +2,7 @@
 layout: default
 title: Système de fichier
 parent: Les bases de Linux
-nav_order: 25
-permalink: /Les-bases-de-linux/Systèmedefichier/
+nav_order: 40
 ---
 
 # Système de fichier

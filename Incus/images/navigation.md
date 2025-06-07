@@ -1,12 +1,9 @@
 ---
 layout: default
-title: Images
-parent: images
-nav_order: 302
-permalink: /Incus/images/images/
-
-
-
+title: Navigation
+parent: Images
+grand_parent: Incus
+nav_order: 2
 ---
 
 <button class="btn js-toggle-dark-mode">Activer le mode sombre</button>

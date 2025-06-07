@@ -1,9 +1,9 @@
 ---
 layout: default
-title: Incus
+title: Images
+parent: Incus
+nav_order: 1
 has_children: true
-nav_order: 301
-permalink: /Incus/images
 
 ---
 
