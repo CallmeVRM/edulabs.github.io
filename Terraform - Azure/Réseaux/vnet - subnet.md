@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Navigation
-parent: Les bases de Linux
+parent: Terraform - Azure
 nav_order: 2
 
 
