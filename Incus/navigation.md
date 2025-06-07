@@ -1,8 +1,8 @@
 ---
 layout: default
-title: Navigation
-parent: Les bases de Linux
-nav_order: 2
+title: Images
+parent: Incus
+nav_order: 10
 
 
 
