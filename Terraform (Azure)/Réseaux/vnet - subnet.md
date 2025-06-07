@@ -1,8 +1,8 @@
 ---
 layout: default
-title: VNet & Subnet
+title: VNet - Subnet
 parent: Réseaux
-grand_parent: Terraform - Azure
+grand_parent: Terraform (Azure)
 nav_order: 2
 ---
 
