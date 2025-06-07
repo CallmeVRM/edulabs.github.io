@@ -4,8 +4,6 @@ title: vnet-subnet
 parent: Réseaux
 nav_order: 201
 
-
-
 ---
 
 <button class="btn js-toggle-dark-mode">Activer le mode sombre</button>

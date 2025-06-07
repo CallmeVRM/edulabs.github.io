@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Images
-parent: Incus
+parent: images
 nav_order: 301
 
 
