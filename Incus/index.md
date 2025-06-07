@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Incus
-nav_order: 100
+nav_order: 300
 has_children: true
 ---
 
