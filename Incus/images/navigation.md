@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Images
-parent: images2
+parent: images
 nav_order: 301
 
 
