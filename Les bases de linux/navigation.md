@@ -3,6 +3,7 @@ layout: default
 title: Navigation
 parent: Les bases de Linux
 nav_order: 22
+permalink: /Les-bases-de-linux/navigation/
 
 
 

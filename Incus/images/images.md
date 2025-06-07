@@ -3,6 +3,7 @@ layout: default
 title: Images
 parent: images
 nav_order: 301
+permalink: /Incus/images/images/
 
 
 
