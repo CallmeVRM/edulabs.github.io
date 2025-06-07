@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Navigation
-parent: Terraform - Azure
+title: NIC (Interface Réseau)
+parent: Réseaux
 nav_order: 3
 
 

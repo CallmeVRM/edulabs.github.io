@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Navigation
-parent: Terraform - Azure
+title: Infrastructure
+parent: Réseaux
 nav_order: 1
 
 

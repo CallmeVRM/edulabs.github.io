@@ -1,7 +1,7 @@
 ---
 layout: default
-title: Navigation
-parent: Terraform - Azure
+title: nsg
+parent: Réseaux
 nav_order: 4
 
 
