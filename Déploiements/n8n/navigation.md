@@ -35,6 +35,34 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 
 ##  Introduction
 
+
+
+
+
+
+
+
+
+
+
+``` bash
+podman run -d --name n8n \
+              --restart=always \
+              -p 5678:80 \
+              -v $HOME/n8n/data/:/home/node/.n8n \
+              -e N8N_BASIC_AUTH_ACTIVE=true \
+              -e N8N_BASIC_AUTH_USER=admin \
+              -e N8N_BASIC_AUTH_PASSWORD=@Pa$$w0rks@ \
+              -e WEBHOOK_URL=http://n8n.edulabs.fr \
+              -e TZ=Europe/Paris docker.io/n8nio/n8n
+```
+
+
+
+
+
+
+
 Sur Linux, tout est fichier, et c’est organisé sous forme de dossiers (aussi appelés *répertoires*). Savoir où vous vous trouvez, comment aller ailleurs et comment revenir en arrière est **fondamental** pour pouvoir gérer des fichiers, exécuter des scripts ou installer des programmes.
 
 🔹 **Commandes à retenir :**
