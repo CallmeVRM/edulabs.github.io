@@ -2,7 +2,7 @@
 layout: default
 title: Grub
 parent: Les bases de Linux
-nav_order: 140
+nav_order: 60
 
 ---
 
