@@ -1,9 +1,9 @@
 ---
 layout: default
-title: Installation n8n sur podman
+title: Installation n8n sur Azure en mode OCI
 parent: n8n
 grand_parent: Déploiements
-nav_order: 2
+nav_order: 3
 ---
 
 <button class="btn js-toggle-dark-mode">Activer le mode sombre</button>
@@ -34,6 +34,54 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 - [4. Astuces pour aller plus vite ](#pushdpopd)
 
 ##  Introduction
+
+
+-------
+
+
+
+yujyuk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------
+
+
+
+
+
+
+
+
+
 
 Si vous installer n8n en local modifiez votre fichier hosts que vous trouverez dans ` C:\Windows\System32\drivers\etc\hosts`  à fin d'ajouter la ligne suivante (x.x.x.x correspond à votre ip, par ex *192.168.10.6*)
 
