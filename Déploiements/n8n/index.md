@@ -1,6 +1,6 @@
 ---
 layout: default
-title: n8n - Podman
+title: n8n
 parent: Déploiements
 nav_order: 1
 has_children: true
