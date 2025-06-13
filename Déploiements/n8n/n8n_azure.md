@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Installation n8n sur Azure en mode OCI
+title: Installation n8n sur Azure en mode Azure Container Application
 parent: n8n
 grand_parent: Déploiements
 nav_order: 3
@@ -40,19 +40,91 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 
 
 
-yujyuk
+## Déploiement :
 
 
+#### Login sur Azure
+```bash
+az login
+```
 
 
+#### Créer un groupe de ressource :
+```bash
+az group create -n n8n -l eastus
+```
 
 
+#### Récupérer les informations dans une variable :
+```bash
+rg=$(az group show -n n8n --query "name" -o tsv)
+loc=$(az group show -n n8n --query "location" -o tsv)
+```
+
+#### Créer un container Registries
+
+```bash
+az acr create \
+  --resource-group $rg \
+  --name edulabsn8n2 \
+  --sku Standard \
+  --location $loc \
+  --admin-enabled true
+```
+
+#### Login dans la registry
+
+```bash
+az acr login --name edulabsn8n2
+```
+
+#### télécharger l'image qu'on veut utiliser, et l'upload sur notre ACR
+```bash
+docker pull docker.n8n.io/n8nio/n8n
+docker tag docker.n8n.io/n8nio/n8n edulabsn8n2.azurecr.io/samples/n8n
+docker push edulabsn8n2.azurecr.io/samples/n8n
+```
 
 
+#### Créer un environnement de container app
+```bash
+az containerapp env create \
+  --name n8n-env \
+  --resource-group $rg \
+  --location $loc \
+  --enable-workload-profiles false \
+  --logs-destination none \
+  --infrastructure-subnet-resource-id ""  # Pas de réseau privé, donc accès internet autorisé
+```
 
+#### Récuperer le mot de passe 
+```bash
+acr_password1=$(az acr credential show --name edulabsn8n2 --query "passwords[?name=='password'].value" --output tsv)
+```
 
-
-
+#### Créer un conteneur app
+```bash
+az containerapp create \
+  --name n8n-app-1 \
+  --resource-group $rg \
+  --environment n8n-env \
+  --image edulabsn8n2.azurecr.io/samples/n8n:latest \
+  --target-port 5678 \
+  --ingress external \
+  --registry-server edulabsn8n2.azurecr.io \
+  --registry-username edulabsn8n2 \
+  --registry-password $acr_password1 \
+  --cpu 0.5 --memory 1.0Gi \
+  --min-replicas 1 --max-replicas 3 \
+  --env-vars N8N_PORT=5678 \
+             N8N_HOST=n8n \
+             N8N_PROTOCOL=https \
+             WEBHOOK_URL=https://n8n.edulabs.fr \
+             GENERIC_TIMEZONE=Europe/Paris \
+             N8N_BASIC_AUTH_ACTIVE=true \
+             N8N_BASIC_AUTH_USER=admin \
+             N8N_BASIC_AUTH_PASSWORD='MotDePasseSur123!'
+```
 
 
 

@@ -12,6 +12,12 @@ nav_order: 30
 ##### Titre niveau 5  
 ###### Titre niveau 6  
 
+---
+
+```bash
+code example
+```
+
 ---  
 
 **Texte en gras**  
