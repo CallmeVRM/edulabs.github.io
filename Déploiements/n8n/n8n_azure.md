@@ -58,43 +58,6 @@ file_share="n8nstrg"
 # 1. Créer le groupe de ressources
 az group create -n "$rg" -l "$loc"
 
-# Création de Storage Account
-
-az storage account create \
-  --name "$storage_account" \
-  --resource-group "$rg" \
-  --location "$loc" \
-  --sku Standard_GRS \
-  --kind StorageV2 \
-  --enable-large-file-share true \
-  --allow-blob-public-access false \
-  --allow-shared-key-access true \
-  --https-only true \
-  --enable-infrastructure-encryption true \
-  --default-action Deny
-
-name : n8nstrgedulabs
-redundancy : GRS
-Performance : Standard
-Tier : Hot
-Enable storage account key access
-Require secure transfer for REST API operations
-Enable large file shares
-Disable Public Network
-Enable large file shares : Blob and File only
-Enable infrastructure encryption : yes
-
-# Récupérer une clé d’accès
-storage_key=$(az storage account keys list \
-  --resource-group "$rg" \
-  --account-name "$storage_account" \
-  --query '[0].value' -o tsv)
-
-# Créer le File Share
-az storage share-rm create \
-  --resource-group "$rg" \
-  --storage-account "$storage_account" \
-  --name "$file_share"
 
 # 2. Créer un ACR
 az acr create \
@@ -114,8 +77,8 @@ docker login "$login_server" --username "$acr_username" --password "$acr_passwor
 
 # 5. Pull, tag et push l’image n8n
 docker pull docker.n8n.io/n8nio/n8n
-docker tag docker.n8n.io/n8nio/n8n "$login_server/$image_repo:$image_tag"
-docker push "$login_server/$image_repo:$image_tag"
+docker tag docker.n8n.io/n8nio/n8n "$login_server/sample:n8n"
+docker push "${acr_name}.azurecr.io/sample:n8n"
 
 # 6. Créer un environnement de Container Apps
 az containerapp env create \
@@ -407,3 +370,359 @@ az group delete --name "$rg" --yes --no-wait
 
 
 ## Version Azure CLI V2
+# Resource Group
+az group create --name n8n-rg --location eastus
+
+# PostgreSQL Database
+az postgres flexible-server create \
+  --resource-group n8n-rg \
+  --name n8n-postgres \
+  --location eastus \
+  --admin-user n8nadmin \
+  --admin-password <STRONG_PASSWORD> \
+  --sku-name Standard_B1ms \
+  --public-access 0.0.0.0-255.255.255.255 \
+  --version 14
+
+az postgres flexible-server db create \
+  --resource-group n8n-rg \
+  --server-name n8n-postgres \
+  --database-name n8ndb
+
+# Storage Account
+az storage account create \
+  --name n8nstorage<UNIQUE_SUFFIX> \
+  --resource-group n8n-rg \
+  --location eastus \
+  --sku Standard_LRS
+
+az storage share create \
+  --name n8n-data \
+  --account-name n8nstorage<UNIQUE_SUFFIX>
+
+STORAGE_KEY=$(az storage account keys list \
+  --account-name n8nstorage<UNIQUE_SUFFIX> \
+  --resource-group n8n-rg \
+  --query "[0].value" -o tsv)
+
+# Container Apps Environment
+az containerapp env create \
+  --name n8n-env \
+  --resource-group n8n-rg \
+  --location eastus
+
+az containerapp create \
+  --name n8n-app \
+  --resource-group n8n-rg \
+  --environment n8n-env \
+  --image docker.io/n8nio/n8n:latest \
+  --target-port 5678 \
+  --ingress external \
+  --env-vars \
+    DB_TYPE=postgresdb \
+    DB_POSTGRESDB_HOST=n8n-postgres.postgres.database.azure.com \
+    DB_POSTGRESDB_PORT=5432 \
+    DB_POSTGRESDB_DATABASE=n8ndb \
+    DB_POSTGRESDB_USER=n8nadmin \
+    DB_POSTGRESDB_SCHEMA=public \
+    DB_POSTGRESDB_PASSWORD=<POSTGRES_PASSWORD> \
+  --secrets "storage-key=$STORAGE_KEY" \
+  --volumes name=n8n-volume storage-type=AzureFile \
+            storage-name=n8n-data \
+            storage-account-name=n8nstorage<UNIQUE_SUFFIX> \
+  --mounts name=n8n-volume mount-path=/home/node/.n8n
+
+# Create temporary container to fix permissions
+az container create \
+  --resource-group n8n-rg \
+  --name permissions-fixer \
+  --image alpine:latest \
+  --command-line "chown -R 1000:1000 /mnt/data" \
+  --azure-file-volume-account-name n8nstorage<UNIQUE_SUFFIX> \
+  --azure-file-volume-account-key $STORAGE_KEY \
+  --azure-file-volume-share-name n8n-data \
+  --azure-file-volume-mount-path /mnt/data
+
+# Delete temporary container
+az container delete --name permissions-fixer --resource-group n8n-rg --yes
+
+
+Check n8n logs:
+az containerapp logs show -n n8n-app -g n8n-rg
+
+
+
+
+
+# N8N + FileStorage + Certificat + postgreSQL : ChatGPT o4 mini high
+### Extension Container Apps :
+az extension add --name containerapp
+
+### Variables (à adapter)
+# Groupe de ressources et région
+rg="n8n-rg"
+loc="westus"
+
+# Storage pour le file share
+sa="n8nstorageedulabs"
+share="n8nshare"
+
+# Postgres flexible server
+pg_server="n8n-pg-edulabs"
+pg_admin="n8nadmin"
+pgpassword="S3cur3P@ssw0rd!"
+pg_db_name="n8n"
+
+# Container Apps
+env_name="n8n-env"
+app_name="n8n-app"
+
+# Domaine à lier
+custom_domain="n8n.edulabs.fr"
+
+# ACR 
+$acr_name="n8nedulabs"
+
+### Création du groupe de ressources
+az group create \
+  --name $rg \
+  --location $loc
+
+### Stockage Azure Files (file share)
+# Création du Storage Account + file share
+az storage account create \
+  --name $sa \
+  --resource-group $rg \
+  --location $loc \
+  --sku Standard_LRS
+
+az storage share create \
+  --account-name $sa \
+  --name $share
+
+# Récupération de la clé du storage (on la stocke comme secret pour le Container App)
+storage_key=$(az storage account keys list \
+  --account-name $sa \
+  --resource-group $rg \
+  --query '[0].value' -o tsv)
+
+### Base de données PostgreSQL
+az provider show -n Microsoft.DBforPostgreSQL
+az provider show --namespace Microsoft.DBforPostgreSQL --query registrationState
+
+### Attention il faut la changer après, pas de flexible server en east en mode student.
+az postgres flexible-server create \
+  --resource-group $rg \
+  --name $pg_server \
+  --location $loc \
+  --admin-user $pg_admin \
+  --admin-password $pgpassword \
+  --sku-name Standard_D2s_v3 \
+  --tier GeneralPurpose \
+  --storage-size 32
+
+# A ESSAYER :
+az postgres flexible-server create \
+  --resource-group $rg \
+  --name $pg_server \
+  --location $loc \
+  --admin-user $pg_admin \
+  --admin-password $pgpassword \
+  --sku-name Standard_B1ms \
+  --tier Burstable \
+  --storage-size 32
+
+
+# Autoriser les IP Azure (0.0.0.0) pour que Container Apps puisse se connecter
+az postgres flexible-server firewall-rule create \
+  --resource-group "$rg" \
+  --name "$pg_server" \
+  --rule-name AllowAzureIPs \
+  --start-ip-address 0.0.0.0 \
+  --end-ip-address 0.0.0.0
+
+export PGHOST=n8n-pg-edulabs.postgres.database.azure.com
+export PGUSER=n8nadmin
+export PGPORT=5432
+export PGDATABASE=postgres
+
+# Test de connexion
+psql -d postgres -c '\conninfo'
+
+# Créer la base de donnée :
+psql -d postgres -c "CREATE DATABASE n8n;"
+
+
+# 2. Créer un ACR
+az acr create \
+  --resource-group "$rg" \
+  --name "$acr_name" \
+  --sku Standard \
+  --location "$loc" \
+  --admin-enabled true
+
+# 3. Récupérer les identifiants ACR
+acr_username=$(az acr credential show --name "$acr_name" --query "username" -o tsv)
+acr_password=$(az acr credential show --name "$acr_name" --query "passwords[0].value" -o tsv)
+login_server="${acr_name}.azurecr.io"
+
+# 4. Login Docker au registre
+docker login "$login_server" --username "$acr_username" --password "$acr_password"
+
+# 5. Pull, tag et push l’image n8n
+docker pull docker.n8n.io/n8nio/n8n
+docker tag docker.n8n.io/n8nio/n8n "$login_server/sample:n8n"
+docker push "${acr_name}.azurecr.io/sample:n8n"
+
+### Environnement Azure Container Apps
+az containerapp env create \
+  --name $env_name \
+  --resource-group $rg \
+  --logs-destination none \
+  --location $loc
+
+### Identité managée & rôle Storage
+az identity create \
+  --resource-group $rg \
+  --name n8n-identity
+
+mi_principal_id=$(az identity show \
+  --resource-group $rg \
+  --name n8n-identity \
+  --query 'principalId' -o tsv)
+mi_resource_id=$(az identity show \
+  --resource-group $rg \
+  --name n8n-identity \
+  --query 'id' -o tsv)
+
+### Assignez-lui le rôle Storage File Data SMB Share Contributor sur votre storage account :
+az role assignment create \
+  --assignee-object-id $mi_principal_id \
+  --assignee-principal-type ServicePrincipal \
+  --role "Storage File Data SMB Share Contributor" \
+  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$sa"
+
+# Update de l'environnement avec le nouveau volume :
+Nom et StorageKey + Read/Write
+
+az containerapp env storage set \
+  --name n8n-env \
+  --resource-group $rg \
+  --storage-name $sa \
+  --access-mode ReadWrite \
+  --azure-file-account-name $sa \
+  --azure-file-account-key $storage_key \
+  --azure-file-share-name $share
+
+
+
+# Création de la Container App n8n
+az containerapp create \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --environment "$env_name" \
+  --image n8nio/n8n:latest \
+  --ingress external \
+  --target-port 5678 \
+  --min-replicas 1 \
+  --max-replicas 3 \
+  --cpu 0.5 \
+  --memory 1.0Gi \
+  --secrets pgpassword="$pgpassword" storagekey="$storage_key" \
+  --env-vars DB_TYPE=postgresdb \
+              DB_POSTGRESDB_HOST="$pg_server.postgres.database.azure.com" \
+              DB_POSTGRESDB_PORT=5432 \
+              DB_POSTGRESDB_DATABASE="$pg_db_name" \
+              DB_POSTGRESDB_USER="$pg_admin" \
+              DB_POSTGRESDB_PASSWORD_SECRET=pgpassword \
+              N8N_BASIC_AUTH_ACTIVE=true \
+              N8N_BASIC_AUTH_USER=admin \
+              N8N_BASIC_AUTH_PASSWORD="Kawthar2012"
+
+az containerapp identity assign \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --user-assigned "$mi_resource_id"
+
+az containerapp secret set \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --secrets pgpassword=S3cur3P@ssw0rd!
+
+
+# Créer un fichier n8n_volume.yaml :
+
+template:
+  containers:
+    - name: n8n-app
+      image: n8nedulabs.azurecr.io/samples/n8n:latest
+      resources:
+        cpu: 0.5
+        memory: 1.0Gi
+      env:
+        - name: DB_TYPE
+          value: postgresdb
+        - name: DB_POSTGRESDB_HOST
+          value: n8n-pg-edulabs.postgres.database.azure.com
+        - name: DB_POSTGRESDB_PORT
+          value: "5432"
+        - name: DB_POSTGRESDB_DATABASE
+          value: n8n
+        - name: DB_POSTGRESDB_USER
+          value: n8nadmin@n8n-pg-edulabs
+        - name: DB_POSTGRESDB_PASSWORD
+          secretRef: pgpassword
+        - name: N8N_BASIC_AUTH_ACTIVE
+          value: "true"
+        - name: N8N_BASIC_AUTH_USER
+          value: admin
+        - name: N8N_BASIC_AUTH_PASSWORD
+          value: Kawthar2012
+      volumeMounts:
+        - volumeName: n8nvolume
+          mountPath: /home/node/.n8n
+  volumes:
+    - name: n8nvolume
+      storageType: AzureFile
+      storageName: n8nstorageedulabs
+
+
+template:
+  containers:
+    - name: n8n-app
+      image: n8nedulabs.azurecr.io/samples/n8n:latest
+      volumeMounts:
+        - volumeName: n8nvolume
+          mountPath: /home/node/.n8n
+  volumes:
+    - name: n8nvolume
+      storageType: AzureFile
+      storageName: n8nstorageedulabs
+
+
+# Faire l'update via le fichier yaml
+az containerapp update \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --yaml n8n_volume.yaml
+
+
+
+
+              
+
+## update du container app avec le nouveau volume
+ajout du volume déclaré dans env
+ajout montage dans le conteneur
+
+
+### Configuration du domaine personnalisé & certificat géré
+az containerapp ingress update \
+  --name $APP_NAME \
+  --resource-group $RG \
+  --ingress external \
+  --custom-domains "$CUSTOM_DOMAIN=managedCertificate"
+
+
+# Check log de container app :
+az containerapp logs show   --name "$app_name"   --resource-group "$rg"   --follow

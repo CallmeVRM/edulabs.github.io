@@ -1,0 +1,34 @@
+---
+template:
+  containers:
+    - name: n8n-app
+      image: n8nedulabs.azurecr.io/samples/n8n:latest
+      resources:
+        cpu: 0.5
+        memory: 1.0Gi
+      env:
+        - name: DB_TYPE
+          value: postgresdb
+        - name: DB_POSTGRESDB_HOST
+          value: n8n-pg-edulabs.postgres.database.azure.com
+        - name: DB_POSTGRESDB_PORT
+          value: "5432"
+        - name: DB_POSTGRESDB_DATABASE
+          value: n8n
+        - name: DB_POSTGRESDB_USER
+          value: n8nadmin
+        - name: DB_POSTGRESDB_PASSWORD
+          secretRef: pgpassword
+        - name: N8N_BASIC_AUTH_ACTIVE
+          value: "true"
+        - name: N8N_BASIC_AUTH_USER
+          value: admin
+        - name: N8N_BASIC_AUTH_PASSWORD
+          value: Kawthar2012
+      volumeMounts:
+        - volumeName: n8nvolume
+          mountPath: /home/node/.n8n
+  volumes:
+    - name: n8nvolume
+      storageType: AzureFile
+      storageName: n8nstorageedulabs
