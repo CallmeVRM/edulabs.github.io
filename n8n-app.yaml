@@ -1,0 +1,132 @@
+id: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/containerapps/n8n-app
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    ? /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourcegroups/n8n-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/n8n-identity
+    : clientId: 41b2bc7c-750f-467f-985c-b82a856fe32d
+      principalId: 5c8efc39-2f96-44cd-b5be-68cf1cc35706
+location: West US
+name: n8n-app
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: n8n-app.proudrock-ecb8f7ef.westus.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 5678
+      targetPortHttpScheme: null
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: 100
+    registries: null
+    revisionTransitionThreshold: null
+    runtime: null
+    secrets:
+    - name: pgpassword
+    - name: storagekey
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 4C7F8FEC8D96840F7B333254A1E5129CBCB51DE90F643B2F29C294F7C0EB1A28
+  delegatedIdentities: []
+  environmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
+  eventStreamEndpoint: https://westus.azurecontainerapps.dev/subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/containerApps/n8n-app/eventstream
+  latestReadyRevisionName: n8n-app--0000004
+  latestRevisionFqdn: n8n-app--0000004.proudrock-ecb8f7ef.westus.azurecontainerapps.io
+  latestRevisionName: n8n-app--0000004
+  managedEnvironmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
+  outboundIpAddresses:
+  - 20.253.254.228
+  - 20.253.254.247
+  - 20.253.254.64
+  - 20.253.254.235
+  - 104.210.49.205
+  - 104.210.49.250
+  - 104.210.49.206
+  - 104.210.55.200
+  - 104.210.49.225
+  - 104.210.49.214
+  - 13.87.246.93
+  - 13.87.246.131
+  - 13.87.246.102
+  - 13.87.246.100
+  - 13.93.214.71
+  - 13.91.44.183
+  - 13.91.98.58
+  - 13.91.96.202
+  - 13.91.40.31
+  - 13.91.45.140
+  - 13.93.202.213
+  patchingMode: Automatic
+  provisioningState: Succeeded
+  runningStatus: Running
+  template:
+    containers:
+    - env:
+      - name: DB_TYPE
+        value: postgresdb
+      - name: DB_POSTGRESDB_HOST
+        value: n8n-pg-edulabs.postgres.database.azure.com
+      - name: DB_POSTGRESDB_PORT
+        value: '5432'
+      - name: DB_POSTGRESDB_DATABASE
+        value: n8n
+      - name: DB_POSTGRESDB_USER
+        value: n8nadmin
+      - name: DB_POSTGRESDB_PASSWORD
+        secretRef: pgpassword
+      - name: DB_POSTGRESDB_SSL
+        value: 'true'
+      - name: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: 'false'
+      - name: N8N_BASIC_AUTH_ACTIVE
+        value: 'true'
+      - name: N8N_BASIC_AUTH_USER
+        value: admin
+      - name: N8N_BASIC_AUTH_PASSWORD
+        value: Kawthar2012
+      volumeMounts:
+        - mountPath: /home/node/.n8n
+          volumeName: n8n-vol
+      image: n8nio/n8n:latest
+      imageType: ContainerImage
+      name: n8n-app
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 3
+      minReplicas: 1
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes:
+      - name: n8n-vol
+        storageType: AzureFile
+        storageName: n8nstorageedulabs
+  workloadProfileName: Consumption
+resourceGroup: n8n-rg
+systemData:
+  createdAt: '2025-06-17T14:16:43.2902853'
+  createdBy: lotfi.hamadene@social.aston-ecole.com
+  createdByType: User
+  lastModifiedAt: '2025-06-17T14:32:43.5449937'
+  lastModifiedBy: lotfi.hamadene@social.aston-ecole.com
+  lastModifiedByType: User
+type: Microsoft.App/containerApps
