@@ -37,489 +37,155 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 
 
 
-## Version Azure CLI
+## Version Azure CLI : N8N + FileStorage + Certificat + postgreSQL : ChatGPT o4 mini high
 
-# Connexion à Azure
+
+#### Connexion à Azure
 az login
 
-# Paramètres
-rg="n8n2"
-loc="eastus"
-env_name="n8n-env-2"
-app_name="n8n-app-2"
-acr_name="edulabsn8n"
-domain="n8n.edulabs.fr"
-image_repo="samples/n8n"
-image_tag="latest"
-cert_name="n8n-cert"
-storage_account="n8nstrgedulabs"
-file_share="n8nstrg"
-
-# 1. Créer le groupe de ressources
-az group create -n "$rg" -l "$loc"
-
-
-# 2. Créer un ACR
-az acr create \
-  --resource-group "$rg" \
-  --name "$acr_name" \
-  --sku Standard \
-  --location "$loc" \
-  --admin-enabled true
-
-# 3. Récupérer les identifiants ACR
-acr_username=$(az acr credential show --name "$acr_name" --query "username" -o tsv)
-acr_password=$(az acr credential show --name "$acr_name" --query "passwords[0].value" -o tsv)
-login_server="${acr_name}.azurecr.io"
-
-# 4. Login Docker au registre
-docker login "$login_server" --username "$acr_username" --password "$acr_password"
-
-# 5. Pull, tag et push l’image n8n
-docker pull docker.n8n.io/n8nio/n8n
-docker tag docker.n8n.io/n8nio/n8n "$login_server/sample:n8n"
-docker push "${acr_name}.azurecr.io/sample:n8n"
-
-# 6. Créer un environnement de Container Apps
-az containerapp env create \
-  --name "$env_name" \
-  --logs-destination none \
-  --resource-group "$rg" \
-  --location "$loc"
-
-subscription_id=$(az account show --query "id" -o tsv)
-kube_env_id="/subscriptions/${subscription_id}/resourceGroups/${rg}/providers/Microsoft.App/managedEnvironments/${env_name}"
-cert_id="${kube_env_id}/certificates/${cert_name}"
-
-# Ajouter un fileshare a l'env
-az containerapp env storage set \
-  --name "$env_name" \
-  --resource-group "$rg" \
-  --storage-name n8nfileshare \
-  --access-mode ReadWrite \
-  --azure-file-account-name "$storage_account" \
-  --azure-file-account-key "$storage_key" \
-  --azure-file-share-name "$file_share"
-
-# 7. Déployer l’application n8n
-az containerapp create \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --environment "$env_name" \
-  --image "$login_server/$image_repo:$image_tag" \
-  --target-port 5678 \
-  --ingress external \
-  --registry-server "$login_server" \
-  --registry-username "$acr_username" \
-  --registry-password "$acr_password" \
-  --cpu 0.5 \
-  --memory 1.0Gi \
-  --min-replicas 1 \
-  --max-replicas 3 \
-  --env-vars \
-      N8N_BASIC_AUTH_ACTIVE=true \
-      N8N_BASIC_AUTH_USER=admin \
-      N8N_BASIC_AUTH_PASSWORD=MotDePasseSur123! \
-      GENERIC_TIMEZONE=Europe/Paris \
-      WEBHOOK_URL=https://$domain \
-      N8N_USER_FOLDER=/data
-
-# Ajout du volume :
-az containerapp update \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --set \
-    properties.configuration.volumeMounts="[{'volumeName':'myfileshare','mountPath':'/data'}]" \
-    properties.template.volumes="[{'name':'n8nfileshare','storageType':'AzureFile','storageName':'n8nfileshare'}]"
-
-
-
-# Vérification : 
-az containerapp show \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --query "properties.configuration.volumeMounts"
-
-az containerapp show \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --query "properties.template.volumes"
-
-
-# 8. Récupérer FQDN de l’app
-fqdn=$(az containerapp show \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --query "properties.configuration.ingress.fqdn" \
-  -o tsv)
-echo $fqdn
-
-# 9. Récupérer le customDomainVerificationId
-verification_id=$(az containerapp show \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --query "properties.customDomainVerificationId" \
-  -o tsv)
-
-echo "Ajoute ce TXT dans ta zone DNS :"
-#Ajout un enregistrement TXT dans la zone DNS du sous-domaine asuid.n8n.edulabs.fr
-echo "$verification_id"
-
-# 10. Attendre que le DNS TXT soit propagé, puis :
-az containerapp hostname add \
-  --resource-group "$rg" \
-  --name "$app_name" \
-  --hostname "$domain"
-
-# 11. Créer un certificat SSL managé
-az containerapp env certificate create \
-  --resource-group "$rg" \
-  --name "$env_name" \
-  --hostname "$domain" \
-  --validation-method CNAME \
-  --certificate-name "$cert_name"
-
-# 12. Lier le certificat SSL au domaine
-az containerapp hostname bind \
-  --resource-group "$rg" \
-  --name "$app_name" \
-  --hostname "$domain" \
-  --certificate "$cert_name" \
-  --environment "$env_name"
-
-echo "✅ Déploiement terminé. Visite : https://$domain"
-
-
-## Version Azure Powershell
-
-```powershell
-# Connexion à Azure
-Connect-AzAccount
-
-# Déclaration des variables
-$rg = "n8n"
-$loc = "eastus"
-$envName = "n8n-env"
-$appName = "n8n-app-1"
-$domain = "n8n.edulabs.fr"
-$acrName = "edulabsn8n2"
-
-# Créer le groupe de ressources
-New-AzResourceGroup -Name $rg -Location $loc
-
-# Créer une Azure Container Registry
-New-AzContainerRegistry -ResourceGroupName $rg -Name $acrName -Sku Standard -Location $loc -EnableAdminUser
-
-# Récupérer les infos d'identification ACR
-$acrCreds = Get-AzContainerRegistryCredential -Name $acrName -ResourceGroupName $rg
-$acrLogin = $acrCreds.Username
-$acrPassword = $acrCreds.Password
-$loginServer = "$acrName.azurecr.io"
-
-#Login ACR
-docker login $loginServer --username $acrLogin --password $acrPassword
-
-# Pull/Tag/Push l’image Docker dans l’ACR
-docker pull docker.n8n.io/n8nio/n8n
-docker tag docker.n8n.io/n8nio/n8n "$($acrName).azurecr.io/samples/n8n"
-docker push "$($acrName).azurecr.io/samples/n8n"
-
-# Créer l’environnement Container App
-$workloadProfile = New-AzContainerAppWorkloadProfileObject `
-  -Name "Consumption" `
-  -Type "Consumption"
-
-# Crée un environnement Azure Container App avec un profil de workload "Consumption"
-New-AzContainerAppManagedEnv `
-  -Name   $envName `
-  -ResourceGroupName $rg `
-  -Location $loc `
-  -WorkloadProfile $workloadProfile
-
-
-# Crée un secret nommé "acr-password" contenant le mot de passe ACR (nécessaire pour l'accès privé à l'image)
-
-$secret = New-AzContainerAppSecretObject -Name "acr-password" -Value $acrPassword
-
-# Récupère l'ID de l'environnement Container App pour lier l'application au bon environnement
-$env_id = (Get-AzContainerAppManagedEnv -ResourceGroupName $rg -Name $envName).Id
-
-# Déclare les variables d'environnement nécessaires à la configuration de l'application n8n
-$envVars = @(
-  New-AzContainerAppEnvironmentVarObject -Name "N8N_BASIC_AUTH_ACTIVE" -Value "true"
-  New-AzContainerAppEnvironmentVarObject -Name "N8N_BASIC_AUTH_USER" -Value "admin"
-  New-AzContainerAppEnvironmentVarObject -Name "N8N_BASIC_AUTH_PASSWORD" -Value "MotDePasseSur123!"
-  New-AzContainerAppEnvironmentVarObject -Name "GENERIC_TIMEZONE" -Value "Europe/Paris"
-  New-AzContainerAppEnvironmentVarObject -Name "WEBHOOK_URL" -Value "https://$domain"
-)
-
-# Définit le template du conteneur à déployer, incluant l'image, les ressources, et les variables d'environnement
-$container_n8n = New-AzContainerAppTemplateObject `
-  -Name "$appName-container" `
-  -Image "$loginServer/samples/n8n:latest" `
-  -ResourceCpu 0.5 `
-  -ResourceMemory "1.0Gi" `
-  -Env $envVars
-
-# Configure l'application : accès externe, port cible, et authentification au registre ACR à l'aide du secret
-$config_n8n = New-AzContainerAppConfigurationObject `
-  -IngressExternal:$true `
-  -IngressTargetPort 5678 `
-  -Registry @( @{
-      Server = $loginServer
-      Username = $acrLogin
-      PasswordSecretRef = "acr-password"
-  }) `
-  -Secret $secret
-
-
-# Créer la Container App
-New-AzContainerApp `
-  -Name              $appName `
-  -ResourceGroupName $rg `
-  -Location          $loc `
-  -EnvironmentId     $env_id `
-  -TemplateContainer $container_n8n `
-  -Configuration     $config_n8n `
-  -ScaleMinReplica   1 `
-  -ScaleMaxReplica   3
-
-
-# 💡 Ajouter manuellement dans ta zone DNS :
-# - CNAME: n8n.edulabs.fr -> <fqdn>
-# - TXT: asuid.n8n.edulabs.fr -> <customDomainVerificationId>
-
-az containerapp hostname add `
-  --resource-group $rg `
-  --name $appName `
-  --hostname $domain
-
-
-# Récupérer l’URL publique
-# Récupérer et parser la configuration
-$config_cname = (Get-AzContainerApp -Name $appName -ResourceGroupName $rg).Configuration | ConvertFrom-Json
-
-# Récupérer le FQDN
-$fqdn = $config_cname.ingress.fqdn
-Write-Output "$fqdn"
-
-# Récupérer le customDomainVerificationId pour DNS TXT
-(Get-AzContainerApp -Name $appName -ResourceGroupName $rg).CustomDomainVerificationId
-
-$certName = "n8n-cert"
-
-$managedCert = New-AzContainerAppManagedCert `
-  -EnvName             $envName `
-  -Name                $certName `
-  -ResourceGroupName   $rg `
-  -Location            $loc `
-  -DomainControlValidation "CNAME" `
-  -SubjectName         $domain
-
-
-az containerapp hostname bind `
-  --resource-group $rg `
-  --name $appName `
-  --hostname $domain `
-  --certificate $certName `
-  --environment $envName
-
-
-
-
-
-## Version ARM/Bicep
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
----
-### Supprimer les instances dans le groupe de ressourde : 
-```bash
-az resource list --resource-group "$rg" --query "[].id" -o tsv | while IFS= read -r id; do
-  az resource delete --ids "$id"
-done
-```
-
-
-az containerapp list --resource-group "$rg" --query "[?managedEnvironmentId!='null'].{name:name, env:managedEnvironmentId}" -o table
-
-az containerapp list --resource-group "$rg" --query "[?contains(managedEnvironmentId, 'n8n-env')].name" -o tsv | while IFS= read -r app; do
-  az containerapp delete --name "$app" --resource-group "$rg" --yes
-done
-
-az containerapp env delete --name n8n-env --resource-group "$rg" --yes
-
-az group delete --name "$rg" --yes --no-wait
-
-
-
-
-## Version Azure CLI V2
-# Resource Group
-az group create --name n8n-rg --location eastus
-
-# PostgreSQL Database
-az postgres flexible-server create \
-  --resource-group n8n-rg \
-  --name n8n-postgres \
-  --location eastus \
-  --admin-user n8nadmin \
-  --admin-password <STRONG_PASSWORD> \
-  --sku-name Standard_B1ms \
-  --public-access 0.0.0.0-255.255.255.255 \
-  --version 14
-
-az postgres flexible-server db create \
-  --resource-group n8n-rg \
-  --server-name n8n-postgres \
-  --database-name n8ndb
-
-# Storage Account
-az storage account create \
-  --name n8nstorage<UNIQUE_SUFFIX> \
-  --resource-group n8n-rg \
-  --location eastus \
-  --sku Standard_LRS
-
-az storage share create \
-  --name n8n-data \
-  --account-name n8nstorage<UNIQUE_SUFFIX>
-
-STORAGE_KEY=$(az storage account keys list \
-  --account-name n8nstorage<UNIQUE_SUFFIX> \
-  --resource-group n8n-rg \
-  --query "[0].value" -o tsv)
-
-# Container Apps Environment
-az containerapp env create \
-  --name n8n-env \
-  --resource-group n8n-rg \
-  --location eastus
-
-az containerapp create \
-  --name n8n-app \
-  --resource-group n8n-rg \
-  --environment n8n-env \
-  --image docker.io/n8nio/n8n:latest \
-  --target-port 5678 \
-  --ingress external \
-  --env-vars \
-    DB_TYPE=postgresdb \
-    DB_POSTGRESDB_HOST=n8n-postgres.postgres.database.azure.com \
-    DB_POSTGRESDB_PORT=5432 \
-    DB_POSTGRESDB_DATABASE=n8ndb \
-    DB_POSTGRESDB_USER=n8nadmin \
-    DB_POSTGRESDB_SCHEMA=public \
-    DB_POSTGRESDB_PASSWORD=<POSTGRES_PASSWORD> \
-  --secrets "storage-key=$STORAGE_KEY" \
-  --volumes name=n8n-volume storage-type=AzureFile \
-            storage-name=n8n-data \
-            storage-account-name=n8nstorage<UNIQUE_SUFFIX> \
-  --mounts name=n8n-volume mount-path=/home/node/.n8n
-
-# Create temporary container to fix permissions
-az container create \
-  --resource-group n8n-rg \
-  --name permissions-fixer \
-  --image alpine:latest \
-  --command-line "chown -R 1000:1000 /mnt/data" \
-  --azure-file-volume-account-name n8nstorage<UNIQUE_SUFFIX> \
-  --azure-file-volume-account-key $STORAGE_KEY \
-  --azure-file-volume-share-name n8n-data \
-  --azure-file-volume-mount-path /mnt/data
-
-# Delete temporary container
-az container delete --name permissions-fixer --resource-group n8n-rg --yes
-
-
-Check n8n logs:
-az containerapp logs show -n n8n-app -g n8n-rg
-
-
-
-
-
-# N8N + FileStorage + Certificat + postgreSQL : ChatGPT o4 mini high
 ### Extension Container Apps :
 az extension add --name containerapp
+az extension add --name storage-preview
 
 ### Variables (à adapter)
+
 # Groupe de ressources et région
 rg="n8n-rg"
-loc="westus"
-
+loc="francecentral"
 # Storage pour le file share
-sa="n8nstorageedulabs"
+sa="n8nstorageedu"
 share="n8nshare"
-
 # Postgres flexible server
 pg_server="n8n-pg-edulabs"
 pg_admin="n8nadmin"
-pgpassword="S3cur3P@ssw0rd!"
+pgpassword="S3cur3P@ssw0rd!"  
 pg_db_name="n8n"
-
 # Container Apps
 env_name="n8n-env"
 app_name="n8n-app"
-
-# Domaine à lier
-custom_domain="n8n.edulabs.fr"
-
-# ACR 
+shareenv="n8nshare"
+# Domaine personnalisé
+custom_domain="n8n.edulabs.fr" 
+# Azure Container Registry
 acr_name="n8nedulabs"
+# Nom du certificat SSL
+cert_name="n8n-cert"
 
 ### Création du groupe de ressources
 az group create \
   --name $rg \
   --location $loc
 
-### Stockage Azure Files (file share)
-# Création du Storage Account + file share
+### Création des ressources de stockage
+
+#### Storage Account et File Share
+
+Le stockage Azure Files permet la persistance des données n8n entre les redémarrages, il permet aussi d’offrir à n8n un espace de stockage ou l’on peut upload ou download des fichiers si on veut travailler avec localement
+
+#### Création du Storage Accountaz storage account create 
 az storage account create \
   --name $sa \
   --resource-group $rg \
   --location $loc \
   --sku Standard_LRS
 
+#### Création du file share
 az storage share create \
   --account-name $sa \
   --name $share
 
-# Récupération de la clé du storage (on la stocke comme secret pour le Container App)
+#### Création du file share
 storage_key=$(az storage account keys list \
   --account-name $sa \
   --resource-group $rg \
   --query '[0].value' -o tsv)
 
-### Base de données PostgreSQL
+## Déploiement de la base de données PostgreSQL
+### Création du serveur PostgreSQL
+#### Vérification du provider PostgreSQL
 az provider show -n Microsoft.DBforPostgreSQL
 az provider show --namespace Microsoft.DBforPostgreSQL --query registrationState
 
-### Attention il faut la changer après, pas de flexible server en east en mode student.
+#### Création du serveur flexible PostgreSQL
 az postgres flexible-server create \
   --resource-group $rg \
   --name $pg_server \
   --location $loc \
   --admin-user $pg_admin \
   --admin-password $pgpassword \
-  --sku-name Standard_D2s_v3 \
-  --tier GeneralPurpose \
+  --sku-name Standard_B1ms \
+  --tier Burstable \
   --storage-size 32
+
+### Configuration des règles de pare-feu
+#### Autoriser les connexions depuis Azure
+```bash
+az postgres flexible-server firewall-rule create \
+  --resource-group "$rg" \
+  --name "$pg_server" \
+  --rule-name AllowAzureIPs \
+  --start-ip-address 0.0.0.0 \
+  --end-ip-address 0.0.0.0
+
+#Remplacer par votre ip publique
+az postgres flexible-server firewall-rule create \
+  --resource-group "$rg" \
+  --name "$pg_server" \
+  --rule-name AllowMyIP \
+  --start-ip-address 82.123.x.x \
+  --end-ip-address 82.123.x.x
+```
+
+#### Création de la base de données n8n
+```bash
+# Connexion à la base de données
+psql -h n8n-pg-edulabs.postgres.database.azure.com -U n8nadmin -d postgres -p 5432
+
+# Dans psql, créer la base de données n8n
+CREATE DATABASE n8n;
+
+# Quitter psql
+\q
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Base de données PostgreSQL
+az provider show -n Microsoft.DBforPostgreSQL
+az provider show --namespace Microsoft.DBforPostgreSQL --query registrationState
 
 # Fonctionne dans la région westus, avec l'abonnement Student (Instance pas cher)
 az postgres flexible-server create \
@@ -608,24 +274,15 @@ az role assignment create \
   --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$sa"
 
 # Update de l'environnement avec le nouveau volume :
-Nom et StorageKey + Read/Write
-
-snenv="n8nstorageedulabs"
 
 az containerapp env storage set \
   --name n8n-env \
   --resource-group $rg \
-  --storage-name $snenv \
+  --storage-name $shareenv \
   --access-mode ReadWrite \
   --azure-file-account-name $sa \
   --azure-file-account-key $storage_key \
   --azure-file-share-name $share
-
-
-az containerapp secret set \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --secrets pgpassword=S3cur3P@ssw0rd!
 
 # Création de la Container App n8n
 az containerapp create \
@@ -650,45 +307,27 @@ az containerapp create \
               DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false \
               N8N_BASIC_AUTH_ACTIVE=true \
               N8N_BASIC_AUTH_USER=admin \
-              N8N_BASIC_AUTH_PASSWORD="Kawthar2012"
+              N8N_BASIC_AUTH_PASSWORD=secretref:n8nBasicAuthPass
 
-
+# Assigner une identité à l'application
 az containerapp identity assign \
   --name "$app_name" \
   --resource-group "$rg" \
   --user-assigned "$mi_resource_id"
 
+# Création d'un secret dans l'application
 az containerapp secret set \
   --name "$app_name" \
   --resource-group "$rg" \
   --secrets pgpassword=S3cur3P@ssw0rd!
 
-# Ajkouter le share en mode volume dans l'application
-# # Le volumeName = le nom du share dans l'environnement pas dans le compte de stockage :
-az containerapp update \
+az containerapp secret set \
   --name "$app_name" \
   --resource-group "$rg" \
-  --set \
-    configuration.volumes="[{'name':'n8nshare','storageType':'AzureFile','storageName':'n8nshare'}]"
+  --secrets n8nBasicAuthPass=S3cur3P@ssw0rd!
 
 
-
-# Montage du share dans l'application (le conteneur)
- :
-az containerapp update \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --set \
-    template.containers[0].volumeMounts="[{'mountPath':'/home/node/.n8n','volumeName':'n8nstorageedulabs'}]"
-
-
-# Vérification :
-az containerapp show \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --query "template.containers[0].volumeMounts"
-
-
+# Ajouter le share en mode volume dans l'application
 # Exporter le template actuel de container app :
 az containerapp show \
   --name "$app_name" \
@@ -696,7 +335,6 @@ az containerapp show \
   --output yaml > n8n-app.yaml
 
 # modifier le fichier yaml et ajouter le volumeMounts et volumes :
-
 template:
   containers:
     - name: n8n-app
@@ -706,19 +344,119 @@ template:
         - name: N8N_USER_FOLDER
           value: /data
       ...
+      # Ajouter le volumeMounts
       volumeMounts:
         - mountPath: /data
           volumeName: n8n-vol
       ...
+  # modifier la partie volumes: 
   volumes:
     - name: n8n-vol
       storageType: AzureFile
-      storageName: n8nstorageedulabs
+      storageName: n8nshare
   ...
 
 # Sauvegarder et mettez à jour le conteneur :   
 
-az containerapp update   --name "$app_name"   --resource-group "$rg"   --yaml n8n-app.yaml
+az containerapp update \
+        --name "$app_name" \
+        --resource-group "$rg" \
+        --yaml n8n-app.yaml
+
+
+# Vérification :
+az containerapp show \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  -o jsonc
+
+
+# 8. Récupérer FQDN de l’app
+fqdn=$(az containerapp show \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --query "properties.configuration.ingress.fqdn" \
+  -o tsv)
+echo $fqdn
+
+# 9. Récupérer le customDomainVerificationId
+verification_id=$(az containerapp show \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --query "properties.customDomainVerificationId" \
+  -o tsv)
+echo $verification_id
+
+# 10. Attendre que le DNS TXT soit propagé, puis :
+az containerapp hostname add \
+  --resource-group "$rg" \
+  --name "$app_name" \
+  --hostname "$custom_domain"
+
+# 11. Créer un certificat SSL managé
+az containerapp env certificate create \
+  --resource-group "$rg" \
+  --name "$env_name" \
+  --hostname "$custom_domain" \
+  --validation-method CNAME \
+  --certificate-name "$cert_name"
+
+# 12. Lier le certificat SSL au domaine
+az containerapp hostname bind \
+  --resource-group "$rg" \
+  --name "$app_name" \
+  --hostname "$custom_domain" \
+  --certificate "$cert_name" \
+  --environment "$env_name"
+
+
+# Déploiement Azure OPEN AI 
+
+
+
+
+# Déploiement Azure OPEN AI 
+# Vérifier l’accès à Azure OpenAI:
+az provider register --namespace Microsoft.CognitiveServices
+az provider show --namespace Microsoft.CognitiveServices --query "registrationState"
+
+
+
+# ########################## A FINIR #############
+
+# Création groupe de ressource pour l'IA
+az group create --name openai-rg --location westus
+
+# Création de la ressource open AI :
+az cognitiveservices account create \
+  --name edulabs-openai-service \
+  --resource-group openai-rg \
+  --kind OpenAI \
+  --sku S0 \
+  --location $loc \
+  --yes \
+  --custom-domain edulabs-openai-service \
+  --api-properties '{"DisableLocalAuth": false}'
+
+# Déployer le modèle Open AI :
+az cognitiveservices account deployment create \
+  --resource-group openai-rg \
+  --name edulabs-openai-service \
+  --deployment-name gpt4o-deploy \
+  --model-name gpt-4o \
+  --model-format OpenAI \
+  --model-version 2024-11-20 \
+  --sku standard \
+  --capacity 450
+
+
+
+
+
+
+
+
+
 
 
 
@@ -734,98 +472,140 @@ az containerapp update   --name "$app_name"   --resource-group "$rg"   --yaml n8
 
 
 # Créer un fichier n8n_volume.yaml :
-
-template:
-  containers:
-    - name: n8n-app
-      image: n8nedulabs.azurecr.io/samples/n8n:latest
+id: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/containerapps/n8n-app
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    ? /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourcegroups/n8n-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/n8n-identity
+    : clientId: 343ef257-0835-4600-8ddf-8103a1ad014f
+      principalId: 9028d3bd-1f14-40dc-a4fb-58079b0f26c1
+location: West US
+name: n8n-app
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: n8n-app.thankfulmushroom-9894101b.westus.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 5678
+      targetPortHttpScheme: null
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: 100
+    registries: null
+    revisionTransitionThreshold: null
+    runtime: null
+    secrets:
+    - name: pgpassword
+    - name: storagekey
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 4C7F8FEC8D96840F7B333254A1E5129CBCB51DE90F643B2F29C294F7C0EB1A28
+  delegatedIdentities: []
+  environmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
+  eventStreamEndpoint: https://westus.azurecontainerapps.dev/subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/containerApps/n8n-app/eventstream
+  latestReadyRevisionName: n8n-app--1z4qwhj
+  latestRevisionFqdn: n8n-app--1z4qwhj.thankfulmushroom-9894101b.westus.azurecontainerapps.io
+  latestRevisionName: n8n-app--1z4qwhj
+  managedEnvironmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
+  outboundIpAddresses:
+  - 13.87.246.93
+  - 13.87.246.131
+  - 13.87.246.102
+  - 13.87.246.100
+  - 13.93.214.71
+  - 13.91.44.183
+  - 13.91.98.58
+  - 13.91.96.202
+  - 13.91.40.31
+  - 13.91.45.140
+  - 20.253.254.228
+  - 20.253.254.247
+  - 20.253.254.64
+  - 20.253.254.235
+  - 104.210.49.205
+  - 104.210.49.250
+  - 104.210.49.206
+  - 104.210.55.200
+  - 104.210.49.225
+  - 104.210.49.214
+  - 172.184.137.142
+  patchingMode: Automatic
+  provisioningState: Succeeded
+  runningStatus: Running
+  template:
+    containers:
+    - env:
+      - name: N8N_USER_FOLDER
+        value: /data
+      - name: DB_TYPE
+        value: postgresdb
+      - name: DB_POSTGRESDB_HOST
+        value: n8n-pg-edulabs.postgres.database.azure.com
+      - name: DB_POSTGRESDB_PORT
+        value: '5432'
+      - name: DB_POSTGRESDB_DATABASE
+        value: n8n
+      - name: DB_POSTGRESDB_USER
+        value: n8nadmin
+      - name: DB_POSTGRESDB_PASSWORD
+        secretRef: pgpassword
+      - name: DB_POSTGRESDB_SSL
+        value: 'true'
+      - name: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: 'false'
+      - name: N8N_BASIC_AUTH_ACTIVE
+        value: 'true'
+      - name: N8N_BASIC_AUTH_USER
+        value: admin
+      - name: N8N_BASIC_AUTH_PASSWORD
+        value: Kawthar2012
+      volumeMounts:
+        - mountPath: /data
+          volumeName: n8nshare
+      image: n8nio/n8n:latest
+      imageType: ContainerImage
+      name: n8n-app
       resources:
         cpu: 0.5
-        memory: 1.0Gi
-      env:
-        - name: DB_TYPE
-          value: postgresdb
-        - name: DB_POSTGRESDB_HOST
-          value: n8n-pg-edulabs.postgres.database.azure.com
-        - name: DB_POSTGRESDB_PORT
-          value: "5432"
-        - name: DB_POSTGRESDB_DATABASE
-          value: n8n
-        - name: DB_POSTGRESDB_USER
-          value: n8nadmin@n8n-pg-edulabs
-        - name: DB_POSTGRESDB_PASSWORD
-          secretRef: pgpassword
-        - name: DB_POSTGRESDB_SSL
-          value: true
-        - name: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED	
-          value: false
-
-
-
-
-        - name: N8N_BASIC_AUTH_ACTIVE
-          value: "true"
-        - name: N8N_BASIC_AUTH_USER
-          value: admin
-        - name: N8N_BASIC_AUTH_PASSWORD
-          value: Kawthar2012
-      volumeMounts:
-        - volumeName: n8nvolume
-          mountPath: /home/node/.n8n
-  volumes:
-    - name: n8nvolume
-      storageType: AzureFile
-      storageName: n8nstorageedulabs
-
-
-template:
-  containers:
-    - name: n8n-app
-      image: n8nedulabs.azurecr.io/samples/n8n:latest
-      volumeMounts:
-        - volumeName: n8nvolume
-          mountPath: /home/node/.n8n
-  volumes:
-    - name: n8nvolume
-      storageType: AzureFile
-      storageName: n8nstorageedulabs
-
-
-# Faire l'update via le fichier yaml
-az containerapp update \
-  --name "$app_name" \
-  --resource-group "$rg" \
-  --yaml n8n_volume.yaml
-
-
-
-
-              
-
-## update du container app avec le nouveau volume
-ajout du volume déclaré dans env
-ajout montage dans le conteneur
-
-
-### Configuration du domaine personnalisé & certificat géré
-az containerapp ingress update \
-  --name $APP_NAME \
-  --resource-group $RG \
-  --ingress external \
-  --custom-domains "$CUSTOM_DOMAIN=managedCertificate"
-
-
-
-
-# Les boins paramètres :
-DB_TYPE	postgresdb
-DB_POSTGRESDB_HOST	n8n-pg-edulabs.postgres.database.azure.com
-DB_POSTGRESDB_PORT	5432
-DB_POSTGRESDB_DATABASE	n8n
-DB_POSTGRESDB_USER	n8nadmin@n8n-pg-edulabs
-
-
-
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    volumes:
+      - name: n8nshare
+        storageType: AzureFile
+        storageName: n8nshare
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 3
+      minReplicas: 1
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+  workloadProfileName: Consumption
+resourceGroup: n8n-rg
+systemData:
+  createdAt: '2025-06-18T13:19:32.8330683'
+  createdBy: lotfi.hamadene@social.aston-ecole.com
+  createdByType: User
+  lastModifiedAt: '2025-06-18T13:21:28.4085398'
+  lastModifiedBy: lotfi.hamadene@social.aston-ecole.com
+  lastModifiedByType: User
+type: Microsoft.App/containerApps
 
 
 
@@ -835,3 +615,24 @@ az containerapp logs show   --name "$app_name"   --resource-group "$rg"   --foll
 az containerapp revision list   --name "$app_name"   --resource-group "$rg"   --query "[].{Name:name, Active:active, Health:properties.healthState}"   -o table
 
 az containerapp show   --name "$app_name"   --resource-group "$rg"   --query "properties.provisioningState"
+
+
+
+---
+### Supprimer les instances dans le groupe de ressourde : 
+```bash
+az resource list --resource-group "$rg" --query "[].id" -o tsv | while IFS= read -r id; do
+  az resource delete --ids "$id"
+done
+```
+
+
+az containerapp list --resource-group "$rg" --query "[?managedEnvironmentId!='null'].{name:name, env:managedEnvironmentId}" -o table
+
+az containerapp list --resource-group "$rg" --query "[?contains(managedEnvironmentId, 'n8n-env')].name" -o tsv | while IFS= read -r app; do
+  az containerapp delete --name "$app" --resource-group "$rg" --yes
+done
+
+az containerapp env delete --name n8n-env --resource-group "$rg" --yes
+
+az group delete --name "$rg" --yes --no-wait

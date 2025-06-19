@@ -1,11 +1,11 @@
-id: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/containerapps/n8n-app
+id: /subscriptions/61de60c5-00e2-4d41-80db-2020feb3a277/resourceGroups/n8n-rg/providers/Microsoft.App/containerapps/n8n-app
 identity:
   type: UserAssigned
   userAssignedIdentities:
-    ? /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourcegroups/n8n-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/n8n-identity
-    : clientId: 41b2bc7c-750f-467f-985c-b82a856fe32d
-      principalId: 5c8efc39-2f96-44cd-b5be-68cf1cc35706
-location: West US
+    ? /subscriptions/61de60c5-00e2-4d41-80db-2020feb3a277/resourcegroups/n8n-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/n8n-identity
+    : clientId: 346e8112-7ee8-49f3-88ad-598a8f829b33
+      principalId: 711274d0-60b5-4d8c-b314-5a49b1ca7de8
+location: France Central
 name: n8n-app
 properties:
   configuration:
@@ -20,7 +20,7 @@ properties:
       customDomains: null
       exposedPort: 0
       external: true
-      fqdn: n8n-app.proudrock-ecb8f7ef.westus.azurecontainerapps.io
+      fqdn: n8n-app.jollyground-63f2edd8.francecentral.azurecontainerapps.io
       ipSecurityRestrictions: null
       stickySessions: null
       targetPort: 5678
@@ -36,38 +36,40 @@ properties:
     secrets:
     - name: pgpassword
     - name: storagekey
+    - name: n8nadminpass
+    - name: n8nbasicauthpass
     service: null
     targetLabel: ''
-  customDomainVerificationId: 4C7F8FEC8D96840F7B333254A1E5129CBCB51DE90F643B2F29C294F7C0EB1A28
+  customDomainVerificationId: 75F0F50AFBF282518863AC37DE11C7CBF8BA27F568102E62F1B514C8F9905B00
   delegatedIdentities: []
-  environmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
-  eventStreamEndpoint: https://westus.azurecontainerapps.dev/subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/containerApps/n8n-app/eventstream
-  latestReadyRevisionName: n8n-app--0000004
-  latestRevisionFqdn: n8n-app--0000004.proudrock-ecb8f7ef.westus.azurecontainerapps.io
-  latestRevisionName: n8n-app--0000004
-  managedEnvironmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
+  environmentId: /subscriptions/61de60c5-00e2-4d41-80db-2020feb3a277/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
+  eventStreamEndpoint: https://francecentral.azurecontainerapps.dev/subscriptions/61de60c5-00e2-4d41-80db-2020feb3a277/resourceGroups/n8n-rg/containerApps/n8n-app/eventstream
+  latestReadyRevisionName: n8n-app--faq18fm
+  latestRevisionFqdn: n8n-app--faq18fm.jollyground-63f2edd8.francecentral.azurecontainerapps.io
+  latestRevisionName: n8n-app--faq18fm
+  managedEnvironmentId: /subscriptions/61de60c5-00e2-4d41-80db-2020feb3a277/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
   outboundIpAddresses:
-  - 20.253.254.228
-  - 20.253.254.247
-  - 20.253.254.64
-  - 20.253.254.235
-  - 104.210.49.205
-  - 104.210.49.250
-  - 104.210.49.206
-  - 104.210.55.200
-  - 104.210.49.225
-  - 104.210.49.214
-  - 13.87.246.93
-  - 13.87.246.131
-  - 13.87.246.102
-  - 13.87.246.100
-  - 13.93.214.71
-  - 13.91.44.183
-  - 13.91.98.58
-  - 13.91.96.202
-  - 13.91.40.31
-  - 13.91.45.140
-  - 13.93.202.213
+  - 20.216.216.188
+  - 20.216.216.219
+  - 20.216.217.5
+  - 20.216.216.182
+  - 98.66.242.126
+  - 98.66.242.144
+  - 98.66.242.209
+  - 98.66.242.230
+  - 98.66.242.239
+  - 98.66.242.232
+  - 20.74.16.183
+  - 20.74.94.128
+  - 20.74.94.150
+  - 20.74.93.40
+  - 98.66.249.192
+  - 98.66.250.10
+  - 98.66.248.181
+  - 98.66.249.135
+  - 98.66.248.214
+  - 98.66.250.141
+  - 172.189.107.27
   patchingMode: Automatic
   provisioningState: Succeeded
   runningStatus: Running
@@ -76,6 +78,12 @@ properties:
     - env:
       - name: DB_TYPE
         value: postgresdb
+      - name: DB_POSTGRESDB_PASSWORD
+        secretRef: pgpassword
+      - name: N8N_BASIC_AUTH_PASSWORD
+        secretRef: n8nadminpass
+      - name: N8N_USER_FOLDER
+        value: /data
       - name: DB_POSTGRESDB_HOST
         value: n8n-pg-edulabs.postgres.database.azure.com
       - name: DB_POSTGRESDB_PORT
@@ -84,8 +92,6 @@ properties:
         value: n8n
       - name: DB_POSTGRESDB_USER
         value: n8nadmin
-      - name: DB_POSTGRESDB_PASSWORD
-        secretRef: pgpassword
       - name: DB_POSTGRESDB_SSL
         value: 'true'
       - name: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
@@ -94,10 +100,14 @@ properties:
         value: 'true'
       - name: N8N_BASIC_AUTH_USER
         value: admin
-      - name: N8N_BASIC_AUTH_PASSWORD
-        value: Kawthar2012
+      - name: N8N_HOST
+        value: n8n.edulabs.fr
+      - name: N8N_PROTOCOL
+        value: https
+      - name: WEBHOOK_TUNNEL_URL
+        value: https://n8n.edulabs.fr/
       volumeMounts:
-        - mountPath: /home/node/.n8n
+        - mountPath: /data
           volumeName: n8n-vol
       image: n8nio/n8n:latest
       imageType: ContainerImage
@@ -119,14 +129,14 @@ properties:
     volumes:
       - name: n8n-vol
         storageType: AzureFile
-        storageName: n8nstorageedulabs
+        storageName: n8nshare
   workloadProfileName: Consumption
 resourceGroup: n8n-rg
 systemData:
-  createdAt: '2025-06-17T14:16:43.2902853'
-  createdBy: lotfi.hamadene@social.aston-ecole.com
+  createdAt: '2025-06-19T07:53:57.0944897'
+  createdBy: admin@edulabs.fr
   createdByType: User
-  lastModifiedAt: '2025-06-17T14:32:43.5449937'
-  lastModifiedBy: lotfi.hamadene@social.aston-ecole.com
+  lastModifiedAt: '2025-06-19T07:58:07.21841'
+  lastModifiedBy: admin@edulabs.fr
   lastModifiedByType: User
 type: Microsoft.App/containerApps
