@@ -147,22 +147,117 @@ CREATE DATABASE n8n;
 # Quitter psql
 \q
 ```
+### Configuration d'Azure Container Registry
+#### Création de l'Azure Container Registry
 
+az acr create \
+  --resource-group "$rg" \
+  --name "$acr_name" \
+  --sku Standard \
+  --location "$loc" \
+  --admin-enabled true
 
+#### Récupération des identifiants ACR
+acr_username=$(az acr credential show --name "$acr_name" --query "username" -o tsv)
+acr_password=$(az acr credential show --name "$acr_name" --query "passwords[0].value" -o tsv)
+login_server="${acr_name}.azurecr.io"
 
+#### Connexion Docker au registre
+docker login "$login_server" --username "$acr_username" --password "$acr_password"
 
+#### Pull, tag et push de l'image n8n
+docker pull docker.n8n.io/n8nio/n8n
+docker tag docker.n8n.io/n8nio/n8n "$login_server/sample:n8n"
+docker push "${acr_name}.azurecr.io/sample:n8n"
 
+### Création de l'environnement Container Apps
+#### Création de l'environnement Container Apps
+az containerapp env create \
+  --name $env_name \
+  --resource-group $rg \
+  --logs-destination none \
+  --location $loc
 
+### Configuration de l'identité managée
+#### Création de l'identité managée
+az identity create \
+  --resource-group $rg \
+  --name n8n-identity
 
+#### Récupération des informations d'identité
+mi_principal_id=$(az identity show \
+  --resource-group $rg \
+  --name n8n-identity \
+  --query 'principalId' -o tsv)
+mi_resource_id=$(az identity show \
+  --resource-group $rg \
+  --name n8n-identity \
+  --query 'id' -o tsv)
 
+#### Attribution du rôle de contributeur sur le stockage
+az role assignment create \
+  --assignee-object-id $mi_principal_id \
+  --assignee-principal-type ServicePrincipal \
+  --role "Storage File Data SMB Share Contributor" \
+  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$sa"
 
+#### Ajout du volume de stockage à l'environnement
 
+az containerapp env storage set \
+  --name n8n-env \
+  --resource-group $rg \
+  --storage-name $shareenv \
+  --access-mode ReadWrite \
+  --azure-file-account-name $sa \
+  --azure-file-account-key $storage_key \
+  --azure-file-share-name $share
 
+### Déploiement de l'application n8n
+#### Création de l'application Container Apps
+az containerapp create \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --environment "$env_name" \
+  --image n8nio/n8n:latest \
+  --ingress external \
+  --target-port 5678 \
+  --min-replicas 1 \
+  --max-replicas 3 \
+  --cpu 0.5 \
+  --memory 1.0Gi \
+  --secrets pgpassword="$pgpassword" storagekey="$storage_key" \
+  --env-vars  DB_TYPE=postgresdb \
+              DB_POSTGRESDB_HOST="$pg_server.postgres.database.azure.com" \
+              DB_POSTGRESDB_PORT=5432 \
+              DB_POSTGRESDB_DATABASE="$pg_db_name" \
+              DB_POSTGRESDB_USER="$pg_admin" \
+              DB_POSTGRESDB_SSL=true \
+              DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false \
+              N8N_BASIC_AUTH_ACTIVE=true \
+              N8N_BASIC_AUTH_USER=admin \
+              N8N_HOST=n8n.edulabs.fr \
+              N8N_PROTOCOL=https \
+              WEBHOOK_TUNNEL_URL=https://n8n.edulabs.fr/
 
+#### Configuration des secrets et identité
+```bash
+# Attribution de l'identité managée à l'application
+az containerapp identity assign \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --user-assigned "$mi_resource_id"
 
-
-
-
+# Configuration des secrets
+az containerapp secret set \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --secrets pgpassword=S3cur3P@ssw0rd!
+  
+az containerapp secret set \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --secrets n8nadminpass=S3cur3P@ssw0rd!
+```
 
 
 
