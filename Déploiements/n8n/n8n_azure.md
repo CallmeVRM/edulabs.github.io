@@ -239,14 +239,14 @@ az containerapp create \
               N8N_PROTOCOL=https \
               WEBHOOK_TUNNEL_URL=https://n8n.edulabs.fr/
 
-#### Configuration des secrets et identité
-```bash
-# Attribution de l'identité managée à l'application
+#### Attribution de l'identité managée à l'application
 az containerapp identity assign \
   --name "$app_name" \
   --resource-group "$rg" \
   --user-assigned "$mi_resource_id"
 
+#### Configuration des secrets et identité
+```bash
 # Configuration des secrets
 az containerapp secret set \
   --name "$app_name" \
@@ -259,17 +259,98 @@ az containerapp secret set \
   --secrets n8nadminpass=S3cur3P@ssw0rd!
 ```
 
+### Configuration du stockage persistant
+# Export de la configuration actuelle
+az containerapp show \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --output yaml > n8n-app.yaml
+
+Modifiez le fichier `n8n-app.yaml` pour ajouter le volume mount :
+
+Attention n’ajoutez pas la dernière partie `volumes:` n’importe où, il y a un bloc spécifique.
+
+```yaml
+template:
+  containers:
+    - name: n8n-app
+      image: n8nio/n8n:latest
+      env:
+        # ... variables existantes ...
+        - name: DB_POSTGRESDB_PASSWORD
+	        secretRef: pgpassword
+	      - name: N8N_BASIC_AUTH_PASSWORD
+		      secretRef: n8nadminpas
+        - name: N8N_USER_FOLDER
+          value: /data
+      # Ajout du volumeMounts
+      volumeMounts:
+        - mountPath: /data
+          volumeName: n8n-vol
+  # Configuration des volumes
+  volumes:
+    - name: n8n-vol
+      storageType: AzureFile
+      storageName: n8nshare
+```
+
+#### Application de la nouvelle configuration
+az containerapp update \
+        --name "$app_name" \
+        --resource-group "$rg" \
+        --yaml n8n-app.yaml
+
+### Configuration du domaine personnalisé
+#### Récupération des informations de l'application
+
+# FQDN de l'application
+fqdn=$(az containerapp show \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --query "properties.configuration.ingress.fqdn" \
+  -o tsv)
+echo "FQDN: $fqdn"
+
+# ID de vérification du domaine personnalisé
+verification_id=$(az containerapp show \
+  --name "$app_name" \
+  --resource-group "$rg" \
+  --query "properties.customDomainVerificationId" \
+  -o tsv)
+echo "Verification ID: $verification_id"
+
+### Configuration DNS
+
+Avant de continuer, configurez les enregistrements DNS suivants chez votre registraire :
+1. **Enregistrement CNAME** : `n8n.edulabs.fr` → `$fqdn`
+2. **Enregistrement TXT** : `asuid.n8n.edulabs.fr` → `$verification_id`
+
+#### Ajout du domaine personnalisé
+az containerapp hostname add \
+  --resource-group "$rg" \
+  --name "$app_name" \
+  --hostname "$custom_domain"
 
 
+#### Configuration SSL
+Avant de lié le certificat au domaine, il faut patienter le temps de création environs (~ 5 min)
+```bash
+# Création du certificat SSL managé
+az containerapp env certificate create \
+  --resource-group "$rg" \
+  --name "$env_name" \
+  --hostname "$custom_domain" \
+  --validation-method CNAME \
+  --certificate-name "$cert_name"
 
-
-
-
-
-
-
-
-
+# Liaison du certificat au domaine
+az containerapp hostname bind \
+  --resource-group "$rg" \
+  --name "$app_name" \
+  --hostname "$custom_domain" \
+  --certificate "$cert_name" \
+  --environment "$env_name"
+```
 
 
 
