@@ -389,55 +389,71 @@ az containerapp hostname bind \
 ```
 
 ### Proof of Concept
+Après avoir fait l’enregistrement classique de n8n avec le mail…
+On va créer un workflow pour vérifier le bon fonctionnement de mon intégration AzureFile
+Au niveau du AzureFile j’ai créé un dossier `uploads`
+```bash
 az storage directory create \
   --account-name "$sa" \
   --share-name "$share" \
   --name uploads \
   --account-key $storage_key \
   --enable-file-backup-request-intent
+```
+
+- Voici le schéma simple du workflow :
+
+- Configuration du module HTTP Request :
+
+- Configuration du module Read/Write Files from Disk :
+
+- Exécution du workflow
 
 
+#### On a bien notre fichier dans le dossier uploads :
 
+
+airg="openai-rg"
 
 # Déploiement Azure OPEN AI 
+### Déploiement de Azure Foundry AI :
+#### Création d’un nouveau groupe de ressource
+az group create \
+  --name $airg \
+  --location $loc
 
 
-
-
-# Déploiement Azure OPEN AI 
-# Vérifier l’accès à Azure OpenAI:
+#### Enregistrer le provider OpenAI
 az provider register --namespace Microsoft.CognitiveServices
 az provider show --namespace Microsoft.CognitiveServices --query "registrationState"
 
 
-
-# ########################## A FINIR #############
-
-airg="openai-rg"
-# Création groupe de ressource pour l'IA
-az group create --name openai-rg --location westus
-
-# Création de la ressource open AI :
+#### Création d’un compte cognitive service
 az cognitiveservices account create \
-  --name edulabs-openai-service \
-  --resource-group  $airg \
+  --name edulabseu-openai-service \
+  --resource-group openai-rg \
   --kind OpenAI \
   --sku S0 \
   --location $loc \
   --yes \
-  --custom-domain edulabs-openai-n8n \
+  --custom-domain edulabseu-openai-service \
   --api-properties '{"DisableLocalAuth": false}'
 
-# Déployer le modèle Open AI :
+#### Déployer un modèle depuis le CLI :
 az cognitiveservices account deployment create \
-  --resource-group openai-rg \
-  --name edulabs-openai-service \
-  --deployment-name gpt4o-deploy \
-  --model-name gpt-4o \
-  --model-format OpenAI \
-  --model-version 2024-11-20 \
-  --sku standard \
-  --capacity 450
+  --resource-group "openai-rg" \
+  --name "edulabseu-openai-service" \
+  --deployment-name "n8n-gpt4o" \
+  --model-name "gpt-4o" \
+  --model-version "2024-11-20" \
+  --model-format "OpenAI" \
+  --sku-name "Standard" \
+  --capacity "100"
+
+Parmi les 37 modèles disponible, notre choix s’est porté sur modèle gpt-4o qui représente le meilleur rapport qualité prix pour notre projet.
+
+
+#### Récupérer les identifiants pour la connexion depuis n8n :
 
 
 
@@ -454,148 +470,6 @@ az cognitiveservices account deployment create \
 
 
 
-
-
-
-
-
-
-
-# Créer un fichier n8n_volume.yaml :
-id: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/containerapps/n8n-app
-identity:
-  type: UserAssigned
-  userAssignedIdentities:
-    ? /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourcegroups/n8n-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/n8n-identity
-    : clientId: 343ef257-0835-4600-8ddf-8103a1ad014f
-      principalId: 9028d3bd-1f14-40dc-a4fb-58079b0f26c1
-location: West US
-name: n8n-app
-properties:
-  configuration:
-    activeRevisionsMode: Single
-    dapr: null
-    identitySettings: []
-    ingress:
-      additionalPortMappings: null
-      allowInsecure: false
-      clientCertificateMode: null
-      corsPolicy: null
-      customDomains: null
-      exposedPort: 0
-      external: true
-      fqdn: n8n-app.thankfulmushroom-9894101b.westus.azurecontainerapps.io
-      ipSecurityRestrictions: null
-      stickySessions: null
-      targetPort: 5678
-      targetPortHttpScheme: null
-      traffic:
-      - latestRevision: true
-        weight: 100
-      transport: Auto
-    maxInactiveRevisions: 100
-    registries: null
-    revisionTransitionThreshold: null
-    runtime: null
-    secrets:
-    - name: pgpassword
-    - name: storagekey
-    service: null
-    targetLabel: ''
-  customDomainVerificationId: 4C7F8FEC8D96840F7B333254A1E5129CBCB51DE90F643B2F29C294F7C0EB1A28
-  delegatedIdentities: []
-  environmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
-  eventStreamEndpoint: https://westus.azurecontainerapps.dev/subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/containerApps/n8n-app/eventstream
-  latestReadyRevisionName: n8n-app--1z4qwhj
-  latestRevisionFqdn: n8n-app--1z4qwhj.thankfulmushroom-9894101b.westus.azurecontainerapps.io
-  latestRevisionName: n8n-app--1z4qwhj
-  managedEnvironmentId: /subscriptions/d79cc050-a650-4718-9b4d-b0d305a43866/resourceGroups/n8n-rg/providers/Microsoft.App/managedEnvironments/n8n-env
-  outboundIpAddresses:
-  - 13.87.246.93
-  - 13.87.246.131
-  - 13.87.246.102
-  - 13.87.246.100
-  - 13.93.214.71
-  - 13.91.44.183
-  - 13.91.98.58
-  - 13.91.96.202
-  - 13.91.40.31
-  - 13.91.45.140
-  - 20.253.254.228
-  - 20.253.254.247
-  - 20.253.254.64
-  - 20.253.254.235
-  - 104.210.49.205
-  - 104.210.49.250
-  - 104.210.49.206
-  - 104.210.55.200
-  - 104.210.49.225
-  - 104.210.49.214
-  - 172.184.137.142
-  patchingMode: Automatic
-  provisioningState: Succeeded
-  runningStatus: Running
-  template:
-    containers:
-    - env:
-      - name: N8N_USER_FOLDER
-        value: /data
-      - name: DB_TYPE
-        value: postgresdb
-      - name: DB_POSTGRESDB_HOST
-        value: n8n-pg-edulabs.postgres.database.azure.com
-      - name: DB_POSTGRESDB_PORT
-        value: '5432'
-      - name: DB_POSTGRESDB_DATABASE
-        value: n8n
-      - name: DB_POSTGRESDB_USER
-        value: n8nadmin
-      - name: DB_POSTGRESDB_PASSWORD
-        secretRef: pgpassword
-      - name: DB_POSTGRESDB_SSL
-        value: 'true'
-      - name: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
-        value: 'false'
-      - name: N8N_BASIC_AUTH_ACTIVE
-        value: 'true'
-      - name: N8N_BASIC_AUTH_USER
-        value: admin
-      - name: N8N_BASIC_AUTH_PASSWORD
-        value: Kawthar2012
-      volumeMounts:
-        - mountPath: /data
-          volumeName: n8nshare
-      image: n8nio/n8n:latest
-      imageType: ContainerImage
-      name: n8n-app
-      resources:
-        cpu: 0.5
-        ephemeralStorage: 2Gi
-        memory: 1Gi
-    volumes:
-      - name: n8nshare
-        storageType: AzureFile
-        storageName: n8nshare
-    initContainers: null
-    revisionSuffix: ''
-    scale:
-      cooldownPeriod: 300
-      maxReplicas: 3
-      minReplicas: 1
-      pollingInterval: 30
-      rules: null
-    serviceBinds: null
-    terminationGracePeriodSeconds: null
-  workloadProfileName: Consumption
-resourceGroup: n8n-rg
-systemData:
-  createdAt: '2025-06-18T13:19:32.8330683'
-  createdBy: lotfi.hamadene@social.aston-ecole.com
-  createdByType: User
-  lastModifiedAt: '2025-06-18T13:21:28.4085398'
-  lastModifiedBy: lotfi.hamadene@social.aston-ecole.com
-  lastModifiedByType: User
-type: Microsoft.App/containerApps
 
 
 
