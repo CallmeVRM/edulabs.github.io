@@ -1,9 +1,9 @@
 ---
 layout: default
 title: Déploiement de 33 Services Enterprise_Grade
-parent: 33 Services
+parent: 33Services
 grand_parent: Podman
-nav_order: 3
+nav_order: 2
 ---
 
 <button class="btn js-toggle-dark-mode">Activer le mode sombre</button>

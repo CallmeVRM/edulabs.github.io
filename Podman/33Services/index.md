@@ -1,9 +1,9 @@
 ---
 layout: default
-title: 33 Services
+title: 33Services
 parent: podman
 nav_order: 1
-has_children: true
+has_children: false
 ---
 
 # Les bases de Linux
