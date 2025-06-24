@@ -1,32 +1,101 @@
 <mxfile host="65bd71144e">
     <diagram id="0HT6tKk5BUYRI6G-uFOj" name="Page-1">
-        <mxGraphModel dx="955" dy="515" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+        <mxGraphModel dx="915" dy="638" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="39" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="39" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="40" y="40" width="120" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="40" value="mariaDB" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="40" value="mariaDB" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="55" y="75" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="41" value="Postgres" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="41" value="Postgres" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="55" y="125" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="42" value="Sqlite" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="42" value="Sqlite" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="55" y="175" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="43" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="43" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="200" y="40" width="120" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="44" value="wordpress" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="44" value="portainer" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="215" y="75" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="45" value="Postgres" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="45" value="Postgres" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="215" y="125" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="46" value="Sqlite" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="46" value="Sqlite" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="215" y="175" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="48" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="320" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="49" value="ACME" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="135" y="345" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="52" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="320" y="320" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="53" value="Nginx" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="335" y="345" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="360" y="40" width="120" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="55" value="nextcloud" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="375" y="75" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" value="mattermost" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="375" y="125" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="57" value="&lt;span class=&quot;lo gb&quot;&gt;Jellyfin&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="375" y="175" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="58" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="40" width="120" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="59" value="Gitlea" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="535" y="75" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="Jenkins" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="535" y="125" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="62" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="680" y="40" width="120" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="63" value="nextcloud" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="695" y="75" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="64" value="mattermost" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="695" y="125" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="65" value="Sqlite" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="695" y="175" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="66" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="840" y="40" width="120" height="320" as="geometry"/>
+                </mxCell>
+                <mxCell id="67" value="Prometheus" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="63.5" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="68" value="Grafana" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="103.5" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="69" value="NodeExporter" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="144.5" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="cAdvisor" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="185.5" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="71" value="ElasticSearch" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="226.5" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="72" value="Logstash" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="265.5" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="73" value="Kibana" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="855" y="306.5" width="90" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
