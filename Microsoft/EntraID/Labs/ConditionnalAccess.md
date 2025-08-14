@@ -1,8 +1,8 @@
 ---
 layout: default
-title: vnet et subnet
-parent: EntraID
-grand_parent: Microsoft
+title: ConditionnalAccess
+parent: Labs
+grand_parent: EntraID
 nav_order: 2
 ---
 

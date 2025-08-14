@@ -1,8 +1,8 @@
 ---
 layout: default
 title: Labs
-parent: EntraID
-grand_parent: Microsoft
+parent: Labs
+grand_parent: EntraID
 nav_order: 2
 has_children: true
 ---
