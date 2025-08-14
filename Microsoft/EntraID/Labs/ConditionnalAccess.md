@@ -1,8 +1,8 @@
 ---
 layout: default
 title: ConditionnalAccess
-parent: Labs
-grand_parent: EntraID
+parent: EntraID
+grand_parent: Microsoft
 nav_order: 2
 ---
 
