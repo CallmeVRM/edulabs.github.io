@@ -1,7 +1,8 @@
 ---
 layout: default
-title: Terraform - Azure
-nav_order: 200
+title: Réseaux
+parent: Microsoft Azure
+nav_order: 1
 has_children: true
 ---
 
