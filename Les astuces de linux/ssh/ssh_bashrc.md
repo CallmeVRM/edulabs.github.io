@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Tips SSH sur Linux
-parent: ssh
+parent: SSH
 grand_parent: Les astuces de linux
 nav_order: 3
 ---
