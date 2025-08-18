@@ -177,3 +177,156 @@ Une fois le fichier identifié, il suffit de lire son contenu avec cat :
 ```cat /var/lib/dpkg/info/bandit7.password```
 
 Mot de passe bandit7 : morbNTDkSW6jIlUc0ymOdMaLnOlFVAaj
+
+
+**## Level 7 > 8**
+
+```ssh bandit7@bandit.labs.overthewire.org -p 2220```
+
+Cette fois, pas besoin de fouiller tout le serveur, le challenge nous dit simplement :
+
+👉 Le mot de passe du prochain niveau est stocké dans le fichier ```data.txt```, juste à côté du mot ```millionth```.
+
+Autrement dit, quelque part dans le fichier ```data.txt```, une ligne contient ce mot-clé et juste après le mot ```millionth``` se trouve le précieux sésame.
+
+### Solution
+
+Ici, pas besoin de réinventer la roue. La commande grep est parfaite pour rechercher un mot précis dans un fichier.
+
+```grep millionth .data.txt```
+
+Mot de passe bandit8 : dfwvzFQi4mU0wfNbFOe9RoWskMLg7eEc
+
+## Level 8 > 9
+
+Cette fois, le challenge est un peu plus subtil.
+Le mot de passe du prochain niveau est caché dans le fichier data.txt… mais il n’est pas marqué par un mot-clé particulier.
+
+La consigne dit simplement :
+
+Le mot de passe est la seule ligne du fichier qui apparaît une seule fois.
+Toutes les autres lignes apparaissent plusieurs fois.
+
+On doit donc :
+
+1. Trier le fichier (pour que les doublons soient regroupés).
+2. Identifier la ligne unique (qui apparaît une seule fois).
+
+### Solution
+
+C’est typiquement un cas où ```sort``` et ```uniq``` font le job, et on peut enchaîner les commandes grâce aux pipes (|) :
+
+```sort data.txt | uniq -u```
+
+- ```sort data.txt``` → trie les lignes du fichier par ordre alphabétique, ce qui regroupe les doublons.
+
+- ```uniq -u``` → affiche uniquement les lignes uniques (celles qui apparaissent une seule fois).
+
+Résultat : on obtient directement la ligne contenant le mot de passe.
+
+Mot de passe bandit9 : 4CKMh1JI91bUIZZPXDqGanal4xvAg0JM
+
+## Level 9 > 10
+
+Dans ce challenge, le mot de passe est caché dans le fichier ```data.txt```, mais ce fichier contient surtout des données illisibles à l'humain.
+
+Les seules indication donnée :
+
+- Le mot de passe est dans une des rares chaînes lisibles par un humain.
+- Cette chaîne est précédée par plusieurs caractères ```=```.
+
+Donc, notre stratégie va être de filtrer uniquement ce qui est lisible et de chercher les ```=``` pour repérer la bonne ligne.
+
+
+### Solution
+
+Bien sûr, on est automatiquement tenté de lancer un ```cat data.txt``` ! Mais non, trop simple sinon ! Et surtout, la commande nous renvoie un tas de caractères illisibles : du charabia incompréhensible pour un humain.
+
+La commande idéale ici est ```strings```, qui extrait toutes les séquences lisibles (ASCII) d’un fichier binaire.
+
+Ensuite, on peut chaîner sa sortie avec la commande ```grep``` en utilisant un pipe (|), pour ne garder que les lignes contenant le caractère ```=``` en plusieurs fois.
+
+```strings data.txt | grep "==="```
+
+Mot de passe bandit10 : FGUW5ilLVJrxX9kMYMmlN4MgbpfMiqey
+
+
+## Level 10 > 11
+
+Le challenge nous dit que le mot de passe du prochain niveau est stocké dans le fichier ```data.txt```, mais cette fois-ci il ne s’agit pas de texte en clair ni de binaire incompréhensible.
+
+👉 Le contenu du fichier est encodé en ```Base64```, qui est un système d’encodage qui transforme des données binaires en caractères lisibles
+
+### Solution
+
+La commande adaptée est base64, avec l’option ```-d``` (decode), qui permet de décoder une chaîne Base64 vers son contenu original.
+
+```base64 -d data.txt```
+
+Mot de passe bandit11 : dtR173fZKb0RRsDFSGsg2RWnpNVj3qRr
+
+## Level 11 > 12
+
+Cette fois, le mot de passe est caché dans le fichier data.txt, mais il n’est pas en clair ni en Base64.
+
+👉 Le contenu a été transformé avec un chiffrement très simple : ROT13.
+
+ROT13 est une forme très basique de chiffrement par substitution. dzChaque lettre est remplacée par celle qui se trouve 13 positions plus loin dans l’alphabet.
+
+### Solution
+
+Pour décoder ROT13 sous Linux, on peut utiliser la commande tr (translate), qui permet de remplacer des ensembles de caractères par d’autres.
+
+```cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'```
+
+- ```cat data.txt``` → affiche le contenu du fichier.
+
+- ```|``` → envoie ce contenu à la commande suivante.
+
+- ```tr 'A-Za-z' 'N-ZA-Mn-za-m'``` → traduit chaque lettre majuscule et minuscule en la décalant de 13 positions.
+
+Mot de passe bandit12 : 7x16WNeHIi5YkIhWsfFIqoognUTyj9Q4
+
+## Level 12 > 13
+
+Dans ce challenge, le mot de passe est stocké dans le fichier data.txt.
+Mais attention, il ne s’agit pas d’un texte encodé comme en Base64 ou ROT13.
+
+👉 Cette fois, data.txt est un hexdump d’un fichier qui a été compressé plusieurs fois (gzip, bzip2, tar, etc.). Il va donc falloir :
+
+- Reconstituer le fichier original à partir de son hexdump.
+- Décompresser étape par étape jusqu’à retrouver le fichier final qui contient le mot de passe.
+
+### Solution
+
+Comme on ne sait pas ce qui se trouve dans le fichier ```data.txt``` on va opter pour un travail propre dans le dossier /tmp a fin d'éviter de polluer l'environnement du serveur.
+
+```mktemp -d```
+
+Il nous retournera un dossier du type : ```/tmp/tmp.AvSiTzLTY8``` son nom peut être différent chez vous
+
+```cd /tmp/tmp.AvSiTzLTY8```
+
+Copier le fichier data.txt dans ce dossier :
+
+```cp ~/data.txt .```
+
+Convertir le hexdump en fichier binaire avec xxd -r :
+
+```xxd -r data.txt > data.hex```
+
+Identifier le type du fichier avec file, puis le décompresser avec l’outil approprié (gzip, bzip2, tar, etc.) :
+
+```file data.bin```
+
+On remarque que notre fichier ```data.bin``` est un fichier compressé avec gzip, on va le renommer :
+
+```mv data.bin data.gz```
+
+Et le décompresser avec la commande :
+
+```gunzip data.gz```
+
+On vérifie le type de notre nouveau fichier :
+```file data```dddddddddddddd
+
