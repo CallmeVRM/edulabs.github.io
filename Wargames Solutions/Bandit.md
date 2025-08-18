@@ -125,7 +125,7 @@ Voici la commande magique :
 
 ```find inhere -type f -size 1033c ! -executable```
 
-**Décomposition logique**
+**Décomposition**
 
 - ```find inhere``` : parcourt récursivement tout le répertoire inhere.
 
@@ -140,3 +140,40 @@ Une fois le fichier trouvé on exécute la commande :
 ```cat inhere/maybehere07/.file2```
 
 Mot de passe bandit6 : HWasnPhtq9AVKe0dmk45nxy20cvUa6EG
+
+**## Level 6 > 7**
+
+```ssh bandit6@bandit.labs.overthewire.org -p 2220```
+
+Le mot de passe du prochain niveau n’est pas dans un dossier bien identifié cette fois-ci : il est caché quelque part sur tout le serveur.
+Et pour corser l’affaire, le fichier à trouver n’est pas unique par son nom, mais par ses propriétés :
+
+- Il est possédé par l’utilisateur bandit7.
+- Il est possédé par le groupe bandit6.
+- Sa taille est exactement 33 octets.
+
+Autrement dit, si vous comptez fouiller chaque répertoire à la main avec ls, vous n'avez pas fini ta soirée. Il faut donc une méthode rapide et intelligente.
+
+### Solution
+
+On va réutiliser la commande ```find```, mais cette fois ci on va la combiner avec d'autres conditions (taille, propiétaire, groupe,...)
+
+```find / -user bandit7 -group bandit6 -size 33c 2>/dev/null```
+
+**Décomposition**
+
+- ```find /``` : lance la recherche à partir de la racine /, donc sur tout le système.
+
+- ```-user bandit7``` : filtre → fichiers appartenant à l’utilisateur bandit7.
+
+- ```-group bandit6``` : filtre → fichiers appartenant au groupe bandit6.
+
+- ```-size 33c``` : filtre → fichiers dont la taille est exactement 33 octets (c = bytes).
+
+- ```2>/dev/null``` : redirige les erreurs (permissions refusées) vers /dev/null pour ne pas polluer l’affichage, elle affichera uniquement si le fichier est trouvé.
+
+Une fois le fichier identifié, il suffit de lire son contenu avec cat :
+
+```cat /var/lib/dpkg/info/bandit7.password```
+
+Mot de passe bandit7 : morbNTDkSW6jIlUc0ymOdMaLnOlFVAaj
