@@ -320,13 +320,240 @@ Identifier le type du fichier avec file, puis le décompresser avec l’outil ap
 ```file data.bin```
 
 On remarque que notre fichier ```data.bin``` est un fichier compressé avec gzip, on va le renommer :
-
 ```mv data.bin data.gz```
 
 Et le décompresser avec la commande :
-
 ```gunzip data.gz```
 
-On vérifie le type de notre nouveau fichier :
-```file data```dddddddddddddd
+On vérifie de nouveau le type de notre fichier qu'on vient d'éxtraire :
+```file data```
 
+Notre nouveau fichier est un ```bzip2```, alors on va le renommer : ```mv data data.bz2```
+
+Et on va le décompresser : ```bunzip2 data.bz2```
+
+Et continue de répéter la procédure, avec le nouveau fichier ```data``` jusqu'à obtenir le fichier contenant le mot de passe.
+
+1. On vérifie le type : ```file data```
+2. On renomme pour avoir la bonne extension : ```mv data.bin data.gz```
+3. On décompresse
+
+Je ne citerais pas toute la procédure car cela change avec le temps.
+
+Pour ma part je l'ai obtenu dans le ```data8``` en faisant un ```cat data8```
+
+![alt text](image.png)
+
+Mot de passe de bandit13 : FO5dwFsc0cbaIiH0h8J2eUks2vdTDwAn
+
+
+## Level 13 > 14
+
+Le mot de passe du prochain niveau est stocké dans ```/etc/bandit_pass/bandit14```
+
+👉 Problème : ce fichier ne peut être lu que par l’utilisateur ```bandit14```
+
+Donc, même connecté en tant que bandit13, on ne peut pas simplement faire : ```cat /etc/bandit_pass/bandit14``` ni on peut changer les permissions.
+
+Cependant, au lieu d’un mot de passe, ce niveau nous fournit une clé privée SSH dans le fichier :
+
+```sshkey.private```
+
+Avec cette clé (disponible dans le home de bandit13), on peut directement se connecter en tant que bandit14, sans connaître son mot de passe.
+
+### Solution
+
+```ssh -i sshkey.private bandit14@localhost -p 2220```
+
+- ```-i sshkey.private``` → indique quelle clé privée utiliser.
+
+Voilà maintenant qu'on est sur la machine bandit14, on récupère le mot de passe dans le fichier ```/etc/bandit_pass/bandit14``` qui nous servira pour le prochain challenge
+
+
+Mot de passe de bandit14 : MU4VWeTyJk8ROof1qqmcBPaLh7lDCPvS
+
+## Level 14 > 15
+
+Aussi surprenant que cela puisse paraitre, le mot de passe du prochain niveau n’est pas caché dans un fichier.
+
+👉 Cette fois, il faut soumettre le mot de passe actuel au port 30000 en local (localhost).
+
+En d’autres termes :
+- On connaît le mot de passe de bandit14 (trouvé au niveau précédent).
+- On doit l’envoyer sur le port TCP 30000 du serveur local.
+- Le serveur nous retournera en échange le mot de passe de bandit15
+
+Pour tester des communications simples avec un port TCP, on a plusieurs outils :
+
+- ```telnet``` : ancien mais pratique.
+- ```nc (netcat)``` : couteau suisse réseau.
+- ```openssl s_client``` : utile pour du SSL/TLS (pas nécessaire ici).
+
+Ici, comme c’est une connexion simple en clair, nc est parfait
+
+```nc localhost 30000```
+
+Une fois la connexion établie, on prompt le mot de passe de ```bandit14```.
+
+
+Mot de passe de bandit15 : 8xCjnmgoKbGLhHFAZlGE5Tmu4M2tKJQo
+
+## Level 15 > 16
+Dans ce challenge, on doit récupérer le mot de passe du prochain niveau, mais cette fois-ci la communication se fait via SSL/TLS.
+
+La consigne :
+
+- Se connecter au port 30001 sur localhost.
+- Envoyer le mot de passe actuel (bandit15).
+- Le serveur répondra avec le mot de passe du prochain niveau (bandit16).
+
+Différence avec le niveau précédent : il ne s’agit pas d’une connexion simple en TCP (nc), mais d’une communication chiffrée en SSL/TLS.
+
+### Solution
+Pour ce genre de connexion, l’outil idéal est :
+
+```openssl s_client``` → permet d’initier une connexion SSL/TLS à un serveur, un peu comme nc mais sécurisé.
+
+```openssl s_client -connect localhost:30001```
+
+Une fois connecté, tapez ou collez le mot de passe actuel ```bandit15``` et appuyer sur Entrée. Voilà le serveur renvoie alors le mot de passe du prochain niveau (bandit16)
+
+Mot de passe de bandit16 : kSkvUpMQ7lBYyCM4GBPvCvT1BfWRy0Dx
+
+
+
+## Level 16 > 17
+
+Cette fois, le challenge prend une tournure plus réaliste côté sécurité réseau.
+
+Le mot de passe de ```bandit16``` doit être envoyé à un port entre ```31000``` et ```32000``` sur ```localhost```.
+Mais il n’y a pas qu’un seul port ouvert dans cette plage !
+
+Il faut donc :
+
+- Scanner pour trouver les ports ouverts.
+- Vérifier lesquels parlent en SSL/TLS.
+- Tester avec le mot de passe actuel.
+
+Un seul port donnera la clé ssh privée de bandit17.
+
+### Solution
+
+Pour résoudre ce problème il faut commencer par scanner les ports dans la plage 31000-32000, à fin de trouver un port qui pourrait nous intéresser :
+
+```nmap -sV -p31000-32000 localhost```
+
+Selon le résultat (les ports ouverts), on testera avec la commande ```openssl s_client``` et le port adéquat
+
+![alt text](image-1.png)
+
+Dans le résultat du scan on à un port qui pourrait potentiellement nous intéresser, c'est le 31790, car 31518 est en mode echo.
+
+Alors on va faire une demande de connexion vers ce port. Le -quiet est important pour éviter un KEYUPDATE
+
+```openssl s_client -connect localhost:31790 -quiet```
+
+On rentre le mot de passe et on obtient la clé privé de bandit17.
+
+Qu'on va copié et coller dans un fichier temporaire :
+
+```
+cd $(mktemp -d)
+nano bandit17
+```
+
+On colle la clé, on sauvegarde et on quitte.
+
+On ajuste les permissions.
+
+```chmod 600 bandit17```
+
+Et finalement on se connecte :
+
+```ssh -i /tmp/tmp.0ISzvsPr1W/bandit17 bandit17@localhost -p 2220```
+
+*PS: Pour changer les droits de la clé privée sur Windows :* 
+```
+icacls .\id_rsa /inheritance:r
+icacls .\id_rsa /grant:r "$($env:USERNAME):(R)"
+```
+
+---
+
+## Level 17 > 18
+
+Dans ce challenge, il y a deux fichiers dans le home directory :
+
+- passwords.old
+- passwords.new
+
+👉 Le mot de passe du prochain niveau est dans passwords.new. C’est la seule ligne qui a changé par rapport à passwords.old, et biensur on ne va pas le faire à la mano.
+
+Pour comparer deux fichiers et voir leurs différences, la commande idéale est ```diff```.
+Elle affiche ligne par ligne ce qui a été modifié, ajouté ou supprimé.
+
+### Solution
+
+Comparer les deux fichiers :
+```diff passwords.old passwords.new```
+
+La sortie va montrer uniquement la ligne qui diffère entre les deux fichiers, le premier concerne password.old et le deuxième passwords.new, ce qui nous intéresse c'est la deuxième ligne qui correspond au mot de passe de bandit18.
+
+Mot de passe de bandit18 : x2gLTTjFwMOhQ8oWNbMN362QKxfRqGlO
+
+## Level 18 > 19
+
+Dans ce challenge, le mot de passe du prochain niveau est stocké dans un fichier readme dans notre home directory.
+
+Mais il y a un piège : .bashrc a été modifié pour nous déconnecter immédiatement dès que l’on ouvre une session SSH.
+
+On doit contourner cette contrainte en évitant d’ouvrir un shell interactif.
+Et il se trouve que SSH nous permet d’exécuter directement une commande distante sans lancer de session normale.
+
+Donc au lieu de se connecter puis taper la commande, on va envoyer la commande directement dans la ligne SSH.
+
+### Solution
+```ssh bandit18@bandit.labs.overthewire.org -p 2220 cat readme```
+
+Mot de passe de bandit19 : cGWpMaKXVwDUNgPAVJbWYuGHVn9zl3j8
+
+## Level 19 > 20
+
+Selon les données fourni, pour ce niveau on doit utiliser un binaire spécial situé dans notre home directory sous le nom de : ```bandit20-do``` pour récupérer le mot de passe qui se trouve dans ```/etc/bandit_pass```
+
+Ce répertoire ```/etc/bandit_pass``` contient plusieurs fichiers, et chaque fichier ne peut être lu que par son propriétaire, dans notre cas le fichier ```bandit20``` et c'est là ou se trouve le mot de passe.
+
+Vous pouvez essayer de faire un ```cat /etc/bandit_pass/bandit20``` vous obtiendrez un refus d'accès.
+
+Le binaire ```bandit20-do``` a un comportement particulier : il a le bit setuid d'activé, c’est-à-dire qu’il s’exécute avec les privilèges de son propriétaire (ici bandit20).
+
+on peut faire un check avec la commande :
+```ls -l bandit20-do``` 
+
+On voit bien le ```s``` dans les permissions ```-rwsr-x---``` qui nous indique que le bit est bien présent ```-rwsr-x--- 1 bandit20 bandit19 14884 Aug 15 13:16 bandit20-do```
+
+On peut aussi faire un check avec la commande : ```file bandit20-do``` 
+
+C'est une fonctionnalité souvent utilisée pour permettre à des utilisateurs non privilégiés d'exécuter des programmes qui ont besoin de droits élevés (comme la commande passwd qui doit écrire dans /etc/shadow).
+
+En clair : même si on est connecté en bandit19, quand on exécute ce binaire, il agit comme si on était bandit20.
+
+Lorsqu'on l'exécute il nous donne une petite astuce :
+
+![alt text](image-2.png)
+
+C’est donc la clé pour accéder au mot de passe qui se trouve, dans ```/etc/bandit_pass```.
+
+### Solution
+
+On va donc utilisé notre binaire ```bandit20-do``` pour ouvrir le fichier ```/etc/bandit_pass/bandit20```
+
+```./bandit20-do cat /etc/bandit_pass/bandit20```
+
+**Attention**
+
+L'utilisation du setuid peut être dangereuse si elle est mal gérée :
+Un programme setuid mal sécurisé peut être exploité pour obtenir des privilèges root.
+C’est pourquoi seuls certains programmes critiques ont ce bit activé, et ils sont rigoureusement audités.
+
+Mot de passe de bandit20 : 0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO
