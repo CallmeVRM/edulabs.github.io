@@ -1,8 +1,8 @@
 ---
 layout: default
-title: Bandit
-parent: Wargames Solutions
-nav_order: 81
+title: Lab - sysAdmin junior simulation
+parent: edulabs-scénario
+nav_order: 501
 
 ---
 
@@ -605,6 +605,9 @@ Mot de passe de bandit21 : ```EeoULMCra2q0dSkYj561DX7s1CpBuOBt```
 
 ## Level 21 > 22
 
+```ssh bandit21@bandit.labs.overthewire.org -p 2220```
+
+
 Le but de ce niveau : trouver le mot de passe caché dans une tâche cron.
 En clair, il y a un script qui tourne automatiquement via cron, et il faut comprendre ce qu’il fait pour mettre la main sur le mot de passe.
 
@@ -615,7 +618,6 @@ En clair, il y a un script qui tourne automatiquement via cron, et il faut compr
 - En regardant la commande exécutée, on peut découvrir où le mot de passe est écrit.
 
 
-
 ### Solution
 
 On va commencer par lister les fichiers dans /etc/cron.d/
@@ -624,4 +626,14 @@ On va commencer par lister les fichiers dans /etc/cron.d/
 
 On constate déjà qu'il n y a que 6 fichiers qu'on peut lire, et c'est un CTF, donc il doit avoir une logique, alors j'opte pour la piste du fichier ```cronjob_bandit22``` puisque nous devons cherche le mot de passe de ```bandit22```.
 
+Une petite lecture du fichier ```cronjob_bandit22``` avec la commande ```cat``` nous indique que la tâche exécute le script ```/usr/bin/cronjob_bandit22.sh```
 
+```cat /etc/cron.d/cronjob_bandit22```
+
+On essaie de lire le script avec la commande ```cat /usr/bin/cronjob_bandit22.sh``` et bim, voilà le fichier qui contient notre mot de passe.
+
+```cat /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv```
+
+Moi aussi au début je croyais que le t706... était le mot de passe, mais non ;)
+
+Mot de passe de bandit22 : ```tRae0UfB9v0UzbCdn9cY0gQnds9GF58Q``` 
