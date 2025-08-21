@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "Solutions du Lab Linux — Sprint 1"
-nav_order: 501
+nav_order: 502
 has_children: true
 ---
 
@@ -160,31 +160,47 @@ rm -f /srv/depts/marketing/share/test
 
 ### 🔴 Incident INC-02 — Utilisateur absent du groupe
 
+  Dans le répertoire `/srv/depts/marketing/share`, Alice a supprimer le fichier de bob sans faire attention. Heuresement Bob possédait le fichier dans son drive, cependant, ce genre
+  d'incident ne doit plus se produire, trouvez une solution pour permettre aux utilsiateurs dugroupe marketing qui travaillent sur le dossier share de supprimer leurs propres fichiers
+  mais pas ceux des autres. Tout en gardant les possibilité de lectures/ecritures/exécutions. 
+
 **Symptômes :**
-- `bob.martin` ne peut pas accéder au projet `siteweb`.
+
+# état du répertoire
+
+`ls -ld /srv/depts/marketing/share`
+Le dossier est bien group-writable (rwxrwx---) mais le sticky-bit est absent.
+
+Tout membre du groupe marketing peut supprimer n’importe quel fichier, même s’il n’en est pas propriétaire.
 
 **Diagnostic :**
-```bash
-id bob.martin
-ls -ld /srv/projects/siteweb
-```
+reproduire le problème :
+`sudo -u thomas.dru touch /srv/depts/marketing/share/coucouAlice`
+`sudo -u alice.dupont rm /srv/depts/marketing/share/coucouAlice`
 
 **Correctif :**
-```bash
-sudo usermod -aG siteweb bob.martin
-```
+
+- Réactiver le sticky-bit tout en conservant l’écriture groupe :
+
+`chmod +t /srv/depts/marketing/share`      
+
+Aucun changement supplémentaire n’est nécessaire ; les droits rwx du groupe restent intacts.
 
 **Vérification :**
-```bash
-id bob.martin
-```
+`sudo -u thomas.dru touch /srv/depts/marketing/share/coucouAlice`
+`sudo -u alice.dupont rm /srv/depts/marketing/share/coucouAlice`
+
+`ls -ld /srv/depts/marketing/share` Le stickybit est bien affiché.
 
 ---
 
 ### 🔴 Incident INC-03 — `passwd: Authentication token manipulation error`
 
 **Symptômes :**
-- `camel.chalal` tente de changer son mot de passe mais obtient une erreur.
+- Suite à une manipulation hasardeuse de ma part `camel.chalal` je n'arrive plus à changer mon mot de passe, j'ai une erreur `passwd: Authentication token manipulation error`.
+
+mot de passe actuel : Motdepasse123!
+
 ```bash
 sudo -u camel.chalal passwd
 ```
@@ -198,8 +214,9 @@ ls -l /etc/shadow
 
 **Correctif :**
 ```bash
-sudo chown root:shadow /etc/shadow
-sudo chmod 640 /etc/shadow
+chattr -i /etc/shadow || true
+chown root:shadow /etc/shadow; chmod 640 /etc/shadow
+chown root:root  /etc/passwd;  chmod 644 /etc/passwd
 ```
 
 **Vérification :**
