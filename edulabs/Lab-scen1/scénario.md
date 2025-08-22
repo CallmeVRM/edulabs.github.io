@@ -71,7 +71,7 @@ Les incidents sont **déclenchés à la demande** via des commandes simples (voi
 
 *Règle d’or : réaliser les tickets dans l’ordre.*
 
-### Ticket 1 — Onboarding d’Alice Dupont
+### Ticket 1 - Onboarding d’Alice Dupont
 Les tâches à faire :
 1. Créer un compte `alice.dupont` (avec son propre /home et un shell /bin/bash).
 2. Son groupe primaire doit être : marketing.
@@ -79,91 +79,116 @@ Les tâches à faire :
 
 Astuces : ```useradd``` ```usermod``` ```passwd``` ```chage```
 
-### Ticket 2 — Groupe transverse com
+### Ticket 2 - Groupe transverse com
 
 1. Vérifier ou créer le groupe com.
 2. Ajouter alice.dupont en groupe secondaire com.
 
-Astuces :
-Hint 1 : ```groupadd```
-Hint 2 : ```usermod```
+Astuces : ```groupadd``` ```usermod```
 
-T3 — Partage Marketing (setgid)
+### Ticket 3 - Partage Marketing (setgid)
 
 1. Sur /srv/depts/marketing/share, activer setgid et les droits d’équipe.
-Attendu : répertoire en 2770 ; un fichier créé hérite du groupe marketing.
+
+Résultat attendu : répertoire en 2770 ; lorsqu'un fichier est créé il héritera des permissions du groupe marketing.
+
+Astuces : `Le 2 active le setgid` `owner/groupe du dossier doivent être cohérents`.
 
 
-Hints :
-Hint 1 : Le 2 active le setgid
-Hint 2 : owner/groupe du dossier doivent être cohérents.
-Hint 3 : testez avec sudo -u 
+### Ticket 4 — Squelette & Bob Martin (Dev)
+
+Le squelette utilisateur doit être mis à jour pour correspondre aux conventions internes actuelles. 
+
+On attend qu’il contienne :
+- Un dossier Documents/
+- Un fichier .bash_aliases avec l’alias : `ll='ls -alF'`
+
+Une fois que c’est en place, tu peux créer l’utilisateur `bob.martin`, dans le groupe `dev`. 
+
+Son environnement (/home, shell) doit refléter automatiquement ce qui a été défini dans le squelette.
+
+Astuces : `install -d ... `. 
+
+L’ordre des opérations est important : le squelette doit être prêt avant toute création de compte. L’objectif est que Bob Martin dispose, dès sa première connexion, d’un environnement cohérent avec nos pratiques.
+
+---
+---
+
+# Troubleshooting incidents 
+
+### Initialisation : Les incidents sont déclenchés par des commandes très simples :
+
+**Déclenchement**
+
+- go-incident01
+- go-incident02
+- go-incident03   # ⚠️ bloque *tous* les `passwd` tant qu’actif
+- go-incident04
 
 
-T4 — Squelette & Bob Martin (Dev)
-
-1. S’assurer que /etc/skel contient :
-Documents/
-.bash_aliases avec alias ll='ls -alF'
-
-2. Créer bob.martin (groupe primaire dev) et vérifier que son home inclut ces éléments.
+**Correction**
+- stop-incident01
+- stop-incident02
+- stop-incident03
+- stop-incident04
 
 
-Hints
-Hint 1 : install -d ...
-Hint 2 : pensez à créer Bob après la mise à jour de /etc/skel
+### INC-01 — « Je suis dans le groupe mais je ne peux pas écrire - alice.dupont»
+
+**Contexte** : - Alice (groupe `marketing`) essaye de créer un fichier dans `/srv/depts/marketing/share` mais obtient « *Permission denied* ».
+
+**Attendu** : 
+- Alice peut créer un fichier.
+- Le fichier appartient bien au **groupe** `marketing`.
+- Les permissions finales du dossier sont `rwxrws---` (`2770`, owner `root:marketing`).
+
+### INC-02 — « Oups, j'ai supprimé par erreur le fichier d'un collègue - alice.dupont »
+
+**Contexte** : 
+
+Dans le répertoire partagé `/srv/depts/marketing/share`, Alice vient de supprimer par erreur un fichier appartenant à Bob (`rapport_bob.txt`).
+
+Or, selon la politique interne, chaque membre du groupe `marketing` doit pouvoir **gérer ses propres fichiers uniquement**, mais ne doit pas avoir la possibilité de supprimer ceux des autres.
+
+**Détails** :
+
+- Bob crée un fichier `rapport_bob.txt` dans le répertoire `share`.
+- Alice exécute `rm rapport_bob.txt` → la commande réussit alors qu’elle ne devrait pas.
+- Ce comportement expose le répertoire partagé à des suppressions accidentelles ou malveillantes.
+
+**Attendu** : Seuls les propriétaires peuvent supprimer leur propres fichiers (le root aussi, et ce n'est pas un piège).
 
 
-Incidents débutant (INC-01 → 04)
-Les incidents sont déclenchés par des commandes très simples :
+### INC-03 — « Je n'arrive plus à changer mon mot de passe : Authentication token manipulation error - camel.chalal »
 
-# Déclenchement
-sudo go-incident01
-sudo go-incident02
-sudo go-incident03   # ⚠️ bloque *tous* les `passwd` tant qu’actif
-sudo go-incident04
+**Contexte** : 
 
+Camel Chalal (groupe dev) tente de changer son mot de passe et obtient immédiatement l’erreur :
 
-# Correction
-sudo stop-incident01
-sudo stop-incident02
-sudo stop-incident03
-sudo stop-incident04
+`passwd: Authentication token manipulation error`
 
+**Attendu** : 
 
-INC-01 — « Je suis dans le groupe mais je ne peux pas écrire »
-Contexte : un membre marketing ne peut pas créer dans …/marketing/share.
-Attendu : dossier en 2770 (setgid), écriture OK, héritage groupe marketing.
-
-Hints
-Hint 1 : droits g+w et setgid.
-Hint 2 : vérifiez owner/groupe du répertoire.
-Hint 3 : testez avec un utilisateur du groupe (alice.dupont).
-
-INC-02 — « Suppression croisée non souhaitée »
-Contexte : un membre peut supprimer le fichier d’un autre dans …/marketing/share.
-Attendu : sticky-bit actif (le t), seuls propriétaires/root suppriment.
-
-Hints
-Hint 1 : sticky-bit sur le répertoire (pas sur les fichiers).
-Hint 2 : le mode attendu doit montrer un t dans ls -ld.
-
-INC-03 — passwd: Authentication token manipulation error
-Contexte : la modification de mot de passe échoue (ex. /etc/shadow immutable).
-Attendu : /etc/shadow non immutable, 0640 root:shadow ; /etc/passwd 0644 root:root ; passwd refonctionne.
-
-Hints
-Hint 1 : regardez les attributs de /etc/shadow.
-Hint 2 : vérifiez owner/groupe/mode de /etc/shadow et /etc/passwd.
-Hint 3 : les logs PAM sont bavards (auth.log / journalctl).
+passwd `camel.chalal` fonctionne normalement, l'utilisateur pourra donc modifier son mot de passe sans problème.
 
 ⚠️ Attention : tant que l’incident est actif, tous les passwd échouent.
 
-INC-04 — Clé SSH ignoré
-Contexte : la connexion par clé est refusée, on retombe sur un mot de passe.
-Attendu : $HOME ≤ 755, ~/.ssh = 700, authorized_keys = 600, owner correct.
+### INC-04 — « Je n'arrive pas à me connecter en ssh avec la nouvelle clé  - camel.chalal »
 
-Hints
-Hint 1 : StrictModes yes refuse les permissions trop ouvertes.
-Hint 2 : vérifiez les 3 niveaux : $HOME, ~/.ssh, authorized_keys.
-Hint 3 : attention au propriétaire des chemins (pas root).
+**Contexte** : 
+
+Le stagiaire sylvain.morel a ajouté une clé publique dans le fichier `~/.ssh/authorized_keys` du compte camel.chalal, afin de permettre une connexion SSH sans mot de passe. Pourtant, malgré cette configuration, le serveur continue de demander une authentification par mot de passe : la clé est ignorée.
+
+Il semble que seul le fichier ait été créé, sans vérification des droits d’accès.
+
+Le manager te demande de contrôler les permissions et les propriétaires des fichiers et répertoires liés à SSH, car une mauvaise configuration peut empêcher le serveur d’utiliser la clé.
+
+**Attendu** : 
+
+Une fois les bons droits appliqués, la connexion SSH par clé doit fonctionner sans basculer vers le mot de passe. Les permissions doivent être strictes :
+
+- $HOME : 0755
+- ~/.ssh : 0700
+- authorized_keys : 0600
+
+Tous les fichiers doivent appartenir à l’utilisateur camel.chalal.

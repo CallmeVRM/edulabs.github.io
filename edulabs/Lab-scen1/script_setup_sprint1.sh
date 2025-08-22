@@ -190,9 +190,11 @@ id "$u" &>/dev/null || {
   useradd -m -d /home/"$u" -s /bin/bash -g dev "$u"
   echo "$u:Motdepasse123!" | chpasswd
 }
+useradd -m -d /home/sylvain.morel -s /bin/bash sylvain.morel
 home=$(getent passwd "$u" | cut -d: -f6)
-install -d -m 0777 -o "$u" -g "$u" "$home/.ssh"
+install -d -m 0777 -o "$u" -g dev "$home/.ssh"
 touch "$home/.ssh/authorized_keys"
+chown sylvain.morel:sylvain.morel "$home/.ssh/authorized_keys"
 chmod 0666 "$home/.ssh/authorized_keys"
 SH
   write /opt/labs/bin/fix_inc04.sh 0755 <<'SH'
@@ -200,7 +202,7 @@ SH
 set -euo pipefail
 u=camel.chalal; home=$(getent passwd "$u" | cut -d: -f6)
 chmod 755 "$home"
-install -d -m 700 -o "$u" -g "$u" "$home/.ssh"
+install -d -m 700 -o "$u" -g dev "$home/.ssh"
 chmod 600 "$home/.ssh/authorized_keys" 2>/dev/null || true
 chown "$u:$u" "$home/.ssh/authorized_keys" 2>/dev/null || true
 SH
