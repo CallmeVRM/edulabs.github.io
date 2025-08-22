@@ -39,77 +39,10 @@ main() {
   done
 
   # 4. /etc/skel
-  install -d -m 0755 /etc/skel/Documents
-  grep -qxF "alias ll='ls -alF'" /etc/skel/.bash_aliases 2>/dev/null ||
-    echo "alias ll='ls -alF'" >> /etc/skel/.bash_aliases
+
 
   # 5. Arborescence lab
   install -d -m 0755 /opt/labs/{bin,tickets/{sprint1,incidents}}
-
-  # 6. Checkers -------------------------------------------------------------
-  write /opt/labs/bin/check_sprint1.sh 0755 <<'CHK'
-#!/usr/bin/env bash
-set -euo pipefail
-die(){ echo "[FAIL] $1"; exit 1; }
-pass(){ echo "[PASS] $1"; }
-has_user(){ getent passwd "$1" >/dev/null; }
-prim(){ id -gn "$1"; }
-groups(){ id -nG "$1"; }
-
-has_user alice.dupont || die "T1: alice.dupont absent"
-[[ $(prim alice.dupont) == marketing ]] || die "T1: groupe primaire ≠ marketing"
-[[ -d /home/alice.dupont ]] || die "T1: home absent"
-grep -q ':/bin/bash$' <(getent passwd alice.dupont) || die "T1: shell ≠ /bin/bash"
-pass "T1 OK"
-
-groups alice.dupont | grep -qw com || die "T2: alice pas dans com"
-pass "T2 OK"
-
-d=/srv/depts/marketing/share
-[[ -d $d ]] || die "T3: share manquant"
-[[ $(stat -c %a "$d") == 2770 ]] || die "T3: permissions ≠ 2770"
-f="$d/.chk$$"; sudo -u alice.dupont bash -lc ": >'$f'" || die "T3: écriture KO"
-[[ $(stat -c %G "$f") == marketing ]] || { rm -f "$f"; die "T3: héritage groupe KO"; }
-rm -f "$f"; pass "T3 OK"
-
-has_user bob.martin || die "T4: bob.martin absent"
-[[ $(prim bob.martin) == dev ]] || die "T4: groupe primaire ≠ dev"
-[[ -d /home/bob.martin/Documents ]] || die "T4: Documents absent"
-grep -q "alias ll=" /home/bob.martin/.bash_aliases || die "T4: alias ll manquant"
-pass "T4 OK"
-
-echo "Sprint 1 VALIDÉ ✅"
-CHK
-
-  write /opt/labs/bin/check_incidents.sh 0755 <<'CHK'
-#!/usr/bin/env bash
-set -euo pipefail
-die(){ echo "[FAIL] $1"; exit 1; }
-pass(){ echo "[PASS] $1"; }
-
-s=/srv/depts/marketing/share
-[[ -d $s ]] || die "INC-01: $s manquant"
-
-[[ $(stat -c %a "$s") == 2770 ]] || die "INC-01: permissions ≠ 2770"
-if getent passwd alice.dupont >/dev/null; then
-  f="$s/.inc01$$"; sudo -u alice.dupont bash -lc ": >'$f'" || die "INC-01: écriture KO"
-  [[ $(stat -c %G "$f") == marketing ]] || { rm -f "$f"; die "INC-01: héritage groupe KO"; }
-  rm -f "$f"
-fi
-pass "INC-01 OK"
-
-find "$s" -maxdepth 0 -type d -perm -1000 >/dev/null || die "INC-02: sticky-bit absent"
-find "$s" -maxdepth 0 -type d -perm -0020 >/dev/null || die "INC-02: pas d'écriture groupe"
-pass "INC-02 OK"
-
-if lsattr /etc/shadow 2>/dev/null | grep -q ' i '; then die "INC-03: /etc/shadow immutable"; fi
-[[ $(stat -c %a /etc/shadow) == 640 && $(stat -c %U:%G /etc/shadow) == root:shadow ]] \
-  || die "INC-03: perms shadow KO"
-pass "INC-03 OK"
-
-pass "INC-04 OK"
-echo "Incidents VALIDÉS ✅"
-CHK
 
   # 7. Scripts incidents ----------------------------------------------------
   ## INC-01
