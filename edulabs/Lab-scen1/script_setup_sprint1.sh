@@ -24,15 +24,15 @@ main() {
       acl sudo tree jq git vim zip tar openssh-server e2fsprogs
 
   # 2. Groupes métier
-  for g in marketing dev hr ops com sftp-ext; do
+  for g in marketing dev hr ops sftp-ext; do
     getent group "$g" >/dev/null || groupadd "$g"
   done
 
   # 3. Répertoires & droits
   install -d -o root -g root -m 0755 /srv /srv/depts /srv/projects
   for g in marketing dev hr ops; do
-    install -d -o root -g "$g" -m 0750 "/srv/depts/$g"
-    install -d -o root -g "$g" -m 2770 "/srv/depts/$g/share"
+    install -d -o root -g "$g" -m 0770 "/srv/depts/$g"
+    install -d -o root -g "$g" -m 0740 "/srv/depts/$g/share"
   done
   for p in siteweb apimobile dataviz; do
     install -d -o root -g dev -m 0775 "/srv/projects/$p"
