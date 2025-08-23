@@ -96,7 +96,8 @@ u=camel.chalal
 
 # 1) S’assure que camel.chalal existe (groupe primaire dev)
 if ! id "$u" &>/dev/null; then
-  useradd -m -d /home/"$u" -s /bin/bash -g dev "$u"
+  useradd -m -d /home/"$u" -s /bin/bash "$u"
+  usermod -aG dev "$u"
   echo "$u:Motdepass123!" | chpasswd
 fi
 
