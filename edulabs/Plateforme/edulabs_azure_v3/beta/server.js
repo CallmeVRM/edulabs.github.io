@@ -1,4 +1,4 @@
-// server.js – backend Express minimal pour le PoC “Start Lab”
+// server.js – backend Express + cleanup automatique des labs expirés
 
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -10,43 +10,53 @@ import { execSync } from 'child_process';
 import crypto from 'crypto';
 import Database from 'better-sqlite3';
 import yaml from 'js-yaml';
+import cron from 'node-cron';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const PORT = process.env.PORT || 3000;
 const LOCATION = process.env.AZURE_LOCATION || 'westeurope';
-const PASSWORD = 'Motdepassefort123!';          // ⚠️ POC UNSAFE – voir README
-const TEMPLATE = path.join(__dirname, 'template.bicep');
+const PASSWORD = 'Motdepassefort123!';        // ⚠️ POC UNSAFE
+const TEMPLATE = path.join(__dirname, 'template.json');
 const LABS_DIR = path.join(__dirname, 'labs');
 const DB_FILE = path.join(__dirname, 'labs.db');
 
-// --- helpers ---------------------------------------------------------------
-
+// ---------------------------------------------------------------------------
+// SQLite
+// ---------------------------------------------------------------------------
 const db = new Database(DB_FILE);
 db.exec(`
   CREATE TABLE IF NOT EXISTS labs (
-    run_id      TEXT PRIMARY KEY,
-    lab_id      TEXT,
-    rg_name     TEXT,
-    vm_name     TEXT,
-    ip          TEXT,
-    expires_at  TEXT,
-    status      TEXT
+    run_id     TEXT PRIMARY KEY,
+    lab_id     TEXT,
+    rg_name    TEXT,
+    vm_name    TEXT,
+    ip         TEXT,
+    expires_at TEXT,
+    status     TEXT
   );
+  CREATE INDEX IF NOT EXISTS idx_expires ON labs(expires_at);
 `);
+
+// ---------------------------------------------------------------------------
+// helpers
+// ---------------------------------------------------------------------------
+fs.mkdirSync(LABS_DIR, { recursive: true });
 
 const sanitizeOwner = (raw = '') =>
     (raw.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10)) || 'student';
 
-function genRunId() {
-    return crypto.randomBytes(4).toString('hex');   // 8 hex chars
+const genRunId = () => crypto.randomBytes(4).toString('hex'); // 8 hex
+
+function writeYaml(lab_id, data) {
+    const p = path.join(LABS_DIR, `${lab_id}.yaml`);
+    fs.writeFileSync(p, yaml.dump(data));
 }
 
-// assure le dossier ./labs
-fs.mkdirSync(LABS_DIR, { recursive: true });
-
-// --- express ---------------------------------------------------------------
-
+// ---------------------------------------------------------------------------
+// Express
+// ---------------------------------------------------------------------------
 const app = express();
 app.use(bodyParser.json());
 app.use(morgan('tiny'));
@@ -64,7 +74,7 @@ app.post('/start', async (req, res) => {
 
         const expires = new Date(Date.now() + durationMinutes * 60_000);
 
-        // 1. fichier params sécurisé
+        // fichier params (pour cacher le password à l’argv)
         const paramsFile = path.join(__dirname, `params-${run_id}.json`);
         fs.writeFileSync(
             paramsFile,
@@ -80,8 +90,8 @@ app.post('/start', async (req, res) => {
             )
         );
 
-        // 2. Azure CLI – bloc sync (PoC : simple)
-        console.log(`[${run_id}] creating resource-group ${rg_name}`);
+        // Azure CLI
+        console.log(`[${run_id}] creating RG ${rg_name}`);
         execSync(`az group create --name ${rg_name} --location ${LOCATION}`, {
             stdio: 'inherit'
         });
@@ -92,14 +102,10 @@ app.post('/start', async (req, res) => {
             { stdio: 'inherit' }
         );
 
-        // 3. récupération IP publique
         const ip = execSync(
             `az network public-ip show -g ${rg_name} -n ${vm_name}-pip --query ipAddress -o tsv`
-        )
-            .toString()
-            .trim();
+        ).toString().trim();
 
-        // 4. YAML (sans mot de passe)
         const yamlObj = {
             lab_id,
             owner,
@@ -116,10 +122,8 @@ app.post('/start', async (req, res) => {
             ],
             created_at: new Date().toISOString()
         };
-        const yamlPath = path.join(LABS_DIR, `${lab_id}.yaml`);
-        fs.writeFileSync(yamlPath, yaml.dump(yamlObj));
+        writeYaml(lab_id, yamlObj);
 
-        // 5. DB
         db.prepare(
             `INSERT INTO labs (run_id, lab_id, rg_name, vm_name, ip, expires_at, status)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -128,27 +132,22 @@ app.post('/start', async (req, res) => {
         res.status(201).json({ lab_id, ip, expires_at: expires.toISOString() });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Provisioning failed – check backend logs.' });
+        res.status(500).json({ error: 'Provisioning failed' });
     }
 });
 
-app.post('/stop', async (req, res) => {
+app.post('/stop', (req, res) => {
     try {
         const lab = req.body.lab_name;
-        const row = db
-            .prepare('SELECT rg_name FROM labs WHERE lab_id = ?')
-            .get(lab);
+        const row = db.prepare('SELECT rg_name FROM labs WHERE lab_id = ?').get(lab);
         if (!row) return res.status(404).json({ error: 'lab not found' });
 
-        execSync(`az group delete --name ${row.rg_name} --yes --no-wait`, {
-            stdio: 'inherit'
-        });
-
+        execSync(`az group delete --name ${row.rg_name} --yes --no-wait`, { stdio: 'inherit' });
         db.prepare('UPDATE labs SET status = ? WHERE lab_id = ?').run('deleting', lab);
         res.json({ status: 'deleting', rg: row.rg_name });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Stop failed.' });
+        res.status(500).json({ error: 'Stop failed' });
     }
 });
 
@@ -159,8 +158,39 @@ app.get('/open/:lab', (req, res) => {
     fs.createReadStream(p).pipe(res);
 });
 
-app.use(express.static(path.join(__dirname, 'public'))); // pour index.html
+// ---------------------------------------------------------------------------
+// Cron job : purge des labs expirés (toutes les 60 s)
+// ---------------------------------------------------------------------------
+cron.schedule('*/1 * * * *', () => {
+    const now = new Date().toISOString();
+    const rows = db.prepare(
+        `SELECT lab_id, rg_name FROM labs
+     WHERE expires_at <= ? AND status = 'running'`
+    ).all(now);
 
-app.listen(PORT, () => {
-    console.log(`Azure-Lab PoC listening on http://localhost:${PORT}`);
+    if (rows.length) console.log(`[cleanup] ${rows.length} lab(s) à supprimer`);
+
+    rows.forEach(({ lab_id, rg_name }) => {
+        try {
+            console.log(`[cleanup] deleting RG ${rg_name} (lab ${lab_id})`);
+            execSync(`az group delete --name ${rg_name} --yes --no-wait`, { stdio: 'inherit' });
+            db.prepare(`UPDATE labs SET status = 'deleting' WHERE lab_id = ?`).run(lab_id);
+
+            // marquer le YAML
+            const yamlPath = path.join(LABS_DIR, `${lab_id}.yaml`);
+            if (fs.existsSync(yamlPath)) {
+                const y = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+                y.status = 'expired';
+                writeYaml(lab_id, y);
+            }
+        } catch (err) {
+            console.error(`[cleanup] échec suppression RG ${rg_name}`, err.message);
+        }
+    });
 });
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.listen(PORT, () =>
+    console.log(`Azure-Lab PoC + cleanup prêt sur http://localhost:${PORT}`)
+);

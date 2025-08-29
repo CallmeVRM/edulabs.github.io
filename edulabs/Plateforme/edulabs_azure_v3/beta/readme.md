@@ -16,3 +16,11 @@
 ```bash
 git clone <ce-repo> && cd azure-lab-poc      # ou copier/coller fichiers
 npm install
+```
+
+## Nettoyage automatique
+
+Un job cron interne vérifie chaque minute `labs.db` ; dès qu’un lab est expiré (`expires_at < now()` et `status = running`), il appelle :
+
+```bash
+az group delete --name <rg_name> --yes --no-wait
