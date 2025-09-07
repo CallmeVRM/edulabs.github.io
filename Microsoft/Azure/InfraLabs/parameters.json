@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "VMName": {
+      "value": "vm-prod-front-client1"
+    },
+    "vnetResourceGroup": {
+      "value": "spoke-prod-front"
+    },
+    "virtualNetworkId": {
+      "value": "/subscriptions/<subId>/resourceGroups/spoke-prod-front/providers/Microsoft.Network/virtualNetworks/vnet-prod-front"
+    },
+    "subnetName": {
+      "value": "subnet_spk_pd_wp_ip"
+    },
+    "networkInterfaceName": {
+      "value": "nic-prod-client1"
+    },
+    "keyVaultName": {
+      "value": "edulabsVault"
+    },
+    "secretName": {
+      "value": "AdminPassword"
+    },
+    "adminUsername": {
+      "value": "lotfi"
+    },
+    "adminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/<subId>/resourceGroups/<rgKeyVault>/providers/Microsoft.KeyVault/vaults/edulabsVault"
+        },
+        "secretName": "AdminPassword"
+      }
+    }
+  }
+}
