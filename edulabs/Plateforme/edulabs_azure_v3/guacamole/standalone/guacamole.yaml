@@ -1,0 +1,12 @@
+users:
+  - username: lotfi2
+    password: MonMotDePasse2
+    connections:
+      - name: SSH-VM-10.9-2
+        protocol: ssh
+        parameters:
+          hostname: 192.168.10.9
+          port: "22"
+          username: lotfi
+          password: root
+        attributes: {}

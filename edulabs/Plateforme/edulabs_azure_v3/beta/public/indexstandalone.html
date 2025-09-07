@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Azure Lab PoC</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 720px;
+            margin: auto;
+            padding: 2rem;
+        }
+
+        label {
+            display: block;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: .5rem;
+        }
+
+        button {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Azure Lab – PoC</h1>
+
+    <label>Owner : <input id="owner" value="alice"></label>
+    <label>Duration (minutes) : <input type="number" id="dur" value="60"></label>
+
+    <button id="start">Start Lab</button>
+    <button id="stop">Stop Lab</button>
+    <button id="open">Open Env</button>
+
+    <h2>Status</h2>
+    <pre id="out">(nothing yet)</pre>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        let currentLab = null;
+
+        function log(msg) {
+            $('out').textContent = msg;
+        }
+
+        $('start').onclick = async () => {
+            const owner = $('owner').value;
+            const duration = Number($('dur').value) || 60;
+            log('⏳ provisioning…');
+            const r = await fetch('/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ owner, durationMinutes: duration })
+            });
+            if (!r.ok) return log('❌ start failed');
+            const data = await r.json();
+            currentLab = data.lab_id;
+            log(`✅ started ${currentLab}\nIP: ${data.ip}\nPassword: Motdepassefort123!\n(Polling YAML…)`);
+
+            // poll YAML
+            for (let i = 0; i < 180; i++) {              // 15 min max
+                const y = await fetch('/open/' + currentLab);
+                if (y.ok) {
+                    log(await y.text() + '\n\nPassword: Motdepassefort123!');
+                    return;
+                }
+                await new Promise(res => setTimeout(res, 5000));
+            }
+            log('⚠️ timeout waiting for YAML');
+        };
+
+        $('stop').onclick = async () => {
+            if (!currentLab) return log('No lab running.');
+            const r = await fetch('/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lab_name: currentLab })
+            });
+            log(r.ok ? '🗑️ Deletion started.' : '❌ stop failed');
+        };
+
+        $('open').onclick = async () => {
+            if (!currentLab) return log('No lab id');
+            const y = await fetch('/open/' + currentLab);
+            log(y.ok ? await y.text() : 'YAML not ready');
+        };
+    </script>
+</body>
+
+</html>

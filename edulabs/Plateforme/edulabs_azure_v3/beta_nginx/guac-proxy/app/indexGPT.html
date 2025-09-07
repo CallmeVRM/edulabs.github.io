@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Portail Labs</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        #left {
+            width: 25%;
+            padding: 1em;
+            border-right: 1px solid #ccc;
+            background: #f9f9f9;
+        }
+
+        #right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #tabs {
+            display: flex;
+            background: #eee;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #tabs button {
+            padding: 0.5em 1em;
+            border: none;
+            background: #ddd;
+            cursor: pointer;
+        }
+
+        #tabs button.active {
+            background: #bbb;
+        }
+
+        #terminals {
+            flex: 1;
+            position: relative;
+            background: black;
+        }
+
+        .terminal {
+            position: absolute;
+            inset: 0;
+            display: none;
+        }
+
+        .terminal.active {
+            display: block;
+        }
+
+        #status {
+            margin-top: .75rem;
+            font-size: .95rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="left">
+        <h2>Consignes</h2>
+        <ol>
+            <li>Connexion en SSH</li>
+            <li>Exécuter les commandes demandées</li>
+            <li>Valider le résultat</li>
+        </ol>
+        <button id="loginBtn">Se connecter avec guacadmin</button>
+        <div id="status"></div>
+    </div>
+
+    <div id="right">
+        <div id="tabs"></div>
+        <div id="terminals"></div>
+    </div>
+
+    <!-- Ta copie locale officielle -->
+    <script src="all.min.js"></script>
+    <script>
+        const API = "/api";
+        let token = null;
+
+        const STATE = ["IDLE(0)", "CONNECTING(1)", "WAITING(2)", "CONNECTED(3)", "DISCONNECTING(4)", "DISCONNECTED(5)"];
+
+        function setStatus(msg) { document.getElementById("status").textContent = msg; console.log("[STATUS]", msg); }
+
+        async function login(username, password) {
+            const resp = await fetch(API + "/tokens", { method: "POST", body: new URLSearchParams({ username, password }) });
+            if (!resp.ok) throw new Error("Échec login");
+            const data = await resp.json();
+            token = data.authToken;
+            return data;
+        }
+
+        async function getConnections() {
+            const resp = await fetch(API + "/session/data/mysql/connections?token=" + token);
+            if (!resp.ok) throw new Error("Impossible de récupérer les connexions");
+            return await resp.json();
+        }
+
+        function makeClient(termDiv) {
+            const tunnel = new Guacamole.WebSocketTunnel("/websocket-tunnel");
+            const client = new Guacamole.Client(tunnel);
+
+            const displayEl = client.getDisplay().getElement();
+            termDiv.appendChild(displayEl);
+
+            // Entrées
+            const mouse = new Guacamole.Mouse(displayEl);
+            mouse.onEach = state => client.sendMouseState(state);
+
+            const keyboard = new Guacamole.Keyboard(document);
+            keyboard.onkeydown = keysym => client.sendKeyEvent(1, keysym);
+            keyboard.onkeyup = keysym => client.sendKeyEvent(0, keysym);
+
+            // Resize
+            const doResize = () => client.sendSize(termDiv.offsetWidth, termDiv.offsetHeight);
+            window.addEventListener("resize", doResize);
+
+            // Log
+            client.onerror = (st) => {
+                console.error("Guac error:", st);
+                setStatus("❌ Guacamole error" + (st ? ` ${st.code} ${st.message || ""}` : ""));
+            };
+            client.onstatechange = (s) => {
+                console.log("Client state:", s, STATE[s] || "");
+                if (s === 3) doResize(); // CONNECTED => pousser la taille
+            };
+
+            // nettoyage
+            window.addEventListener("beforeunload", () => client.disconnect());
+            return client;
+        }
+
+        function openConnection(connId, name) {
+            // Conteneur + onglet
+            const termDiv = document.createElement("div");
+            termDiv.className = "terminal";
+            document.getElementById("terminals").appendChild(termDiv);
+
+            const tabBtn = document.createElement("button");
+            tabBtn.textContent = name;
+            tabBtn.onclick = () => {
+                document.querySelectorAll(".terminal").forEach(t => t.classList.remove("active"));
+                document.querySelectorAll("#tabs button").forEach(b => b.classList.remove("active"));
+                termDiv.classList.add("active");
+                tabBtn.classList.add("active");
+            };
+            document.getElementById("tabs").appendChild(tabBtn);
+
+            if (document.querySelectorAll(".terminal").length === 1) tabBtn.click();
+
+            // Client + tentative 1 (id/type/dataSource)
+            const client = makeClient(termDiv);
+
+            const tryParams = [
+                new URLSearchParams({ token, id: connId, type: "c", dataSource: "mysql" }).toString(),
+                new URLSearchParams({ token, GUAC_ID: connId, GUAC_TYPE: "c", GUAC_DATA_SOURCE: "mysql" }).toString(),
+            ];
+
+            let attempt = 0, connected = false;
+
+            const tryConnect = () => {
+                if (attempt >= tryParams.length) { setStatus("❌ Impossible d'ouvrir la session."); return; }
+                const qs = tryParams[attempt++];
+                console.log("[CONNECT] qs:", qs);
+                client.connect(qs);
+
+                // si pas CONNECTED (3) au bout de 2s, on tente l'autre variante
+                const timer = setTimeout(() => {
+                    if (!connected) {
+                        console.warn("No CONNECTED state, retry with alternate params…");
+                        client.disconnect();
+                        setTimeout(tryConnect, 200);
+                    }
+                }, 2000);
+
+                client.onstatechange = (s) => {
+                    console.log("Client state:", s, STATE[s] || "");
+                    if (s === 3) { // CONNECTED
+                        connected = true;
+                        clearTimeout(timer);
+                        // afficher ce terminal, dimensionner
+                        termDiv.classList.add("active");
+                        tabBtn.classList.add("active");
+                        client.sendSize(termDiv.offsetWidth, termDiv.offsetHeight);
+                    } else if (s === 5 && !connected) {
+                        // DISCONNECTED pendant tentative → on laissera le timer relancer
+                    }
+                };
+            };
+
+            tryConnect();
+        }
+
+        document.getElementById("loginBtn").onclick = async () => {
+            setStatus("Connexion en cours…");
+            try {
+                await login("guacadmin", "guacadmin");
+                const conns = await getConnections();
+                const list = Object.values(conns);
+                if (list.length === 0) { setStatus("⚠️ Aucun environnement disponible."); return; }
+                setStatus("✅ Connecté. Ouverture des terminaux…");
+                list.forEach(c => openConnection(c.identifier, c.name));
+            } catch (err) {
+                console.error(err);
+                setStatus("❌ Erreur : " + err.message);
+            }
+        };
+    </script>
+</body>
+
+</html>
