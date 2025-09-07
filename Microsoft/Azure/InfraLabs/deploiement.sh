@@ -153,7 +153,7 @@ az vm create \
   --nics $name_nic_prod_front_wp_client1 \
   --os-disk-delete-option Delete \
   --storage-sku Premium_LRS \
-  --custom-data <(envsubst < wp-cloud-init.yaml) \
+  --custom-data wp-cloud-init.yaml \
   --zone 1
 
 #VM DB Wordpress Back

@@ -12,35 +12,30 @@ packages:
   - curl
   - unzip
 
-write_files:
-  - path: /etc/environment
-    permissions: '0644'
-    content: |
-      WP_DB_NAME=${WP_DB_NAME}
-      WP_DB_USER=${WP_DB_USER}
-      WP_DB_PASS=${WP_DB_PASS}
-      WP_DB_HOST=${WP_DB_HOST}
-
 runcmd:
-  # Charger les variables denvironnement
-  - source /etc/environment
+  - |
+    # Declare variables
+    DB_NAME="wordpress"
+    DB_USER="wpuser"
+    DB_PASS="Motdepasse123!"
+    DB_HOST="10.2.1.4"
 
-  # Télécharger et installer WordPress
-  - curl -O https://wordpress.org/latest.tar.gz
-  - tar -xzf latest.tar.gz
-  - cp -r wordpress/* /var/www/html/
-  - chown -R www-data:www-data /var/www/html/
-  - chmod -R 750 /var/www/html/
-  - rm /var/www/html/index.html || true
+    # Download and install WordPress
+    curl -O https://wordpress.org/latest.tar.gz
+    tar -xzf latest.tar.gz
+    cp -r wordpress/* /var/www/html/
+    chown -R www-data:www-data /var/www/html/
+    chmod -R 750 /var/www/html/
+    rm /var/www/html/index.html || true
 
-  # Configurer wp-config.php avec les variables
-  - cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
-  - sed -i "s/define( 'DB_NAME', '' );/define( 'DB_NAME', '${WP_DB_NAME}' );/" /var/www/html/wp-config.php
-  - sed -i "s/define( 'DB_USER', '' );/define( 'DB_USER', '${WP_DB_USER}' );/" /var/www/html/wp-config.php
-  - sed -i "s/define( 'DB_PASSWORD', '' );/define( 'DB_PASSWORD', '${WP_DB_PASS}' );/" /var/www/html/wp-config.php
-  - sed -i "s/define( 'DB_HOST', '' );/define( 'DB_HOST', '${WP_DB_HOST}' );/" /var/www/html/wp-config.php
+    # Configure wp-config.php using variables
+    cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+    sed -i "s/database_name_here/${DB_NAME}/" /var/www/html/wp-config.php
+    sed -i "s/username_here/${DB_USER}/" /var/www/html/wp-config.php
+    sed -i "s/password_here/${DB_PASS}/" /var/www/html/wp-config.php
+    sed -i "s/localhost/${DB_HOST}/" /var/www/html/wp-config.php
 
-  # Redémarrer Apache
-  - systemctl restart apache2
+    # Restart Apache
+    systemctl restart apache2
 
-final_message: "WordPress installé avec variables denvironnement."
+final_message: "WordPress installation completed with hardcoded variables."
