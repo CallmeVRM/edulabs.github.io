@@ -17,7 +17,7 @@ az group create -l $location -n $rg
 vnet_hub_name="vnet-hub"
 vnet_hub_ip="10.0.0.0/16"
 
-vnet_spoke_prod_front_name="vnet_spk_p_f_ip"
+vnet_spoke_prod_front_name="vnet_spk_p_f"
 vnet_spk_p_f_ip="10.1.0.0/16"
 subnet_spoke_prod_front_wordpress_name="sub_spk_p_b_dbwp"
 sub_spk_p_f_wp_ip="10.1.1.0/24"
@@ -30,7 +30,7 @@ sub_spk_p_b_dbwp_ip="10.2.1.0/24"
 name_nic_prod_front_wp_client1="wp_front_client1"
 name_nic_prod_back_dbwp_client1="dbwp_back_client1"
 
-name_vault_prod="edulabsVault-2"
+name_vault_prod="edulabsVault-3"
 
 name_ip_pub_bastion="ip-pub-bastion"
 name_ip_pub_lb_prod_front="ip-pub-lb-prod-front"
@@ -60,7 +60,6 @@ id_vnet_hub=$(az network vnet show --name vnet-hub -g $rg --query id -o tsv)
 az network vnet create -g $rg -l $location --name $vnet_spoke_prod_front_name --address-prefix $vnet_spk_p_f_ip
 #Récupérer l'ID :
 id_vnet_spoke_prod_front=$(az network vnet show --name $vnet_spoke_prod_front_name -g $rg --query id -o tsv)
-
 
 #vnet spoke-prod-back
 az network vnet create -g $rg -l $location --name $vnet_spoke_prod_back_name --address-prefix $vnet_spk_p_b_ip
@@ -124,15 +123,44 @@ az network public-ip create -g $rg -l $location -n $name_ip_pub_lb_prod_front --
 az network public-ip create -g $rg -l $location -n $name_ip_pub_vm_wp_front_temp --sku Standard
 
 
+########################################
+#   Création de Bastion 
+########################################
+
+az config set extension.use_dynamic_install=yes_without_prompt
+
+az network vnet subnet create --resource-group $rg \
+															--vnet-name $vnet_hub_name \
+															--name AzureBastionSubnet \
+															--address-prefix $bastion_hub_subnet
+
+az network bastion create --resource-group $rg \
+													--location $location \
+													--name bastion \
+													--public-ip-address $name_ip_pub_bastion \
+									        --sku Standard \
+													--vnet-name $vnet_hub_name \
+													--no-wait	
+
+
 # Nic's #
 #--------
 #NIC VM Wordpress Client 1
 az network nic create -g $rg -l $location -n $name_nic_prod_front_wp_client1 --vnet-name $vnet_spoke_prod_front_name --subnet $subnet_spoke_prod_front_wordpress_name --public-ip-address $name_ip_pub_vm_wp_front_temp
 
+ip_vm_front_public_temp=$(az network nic show \
+  --name $name_nic_prod_front_wp_client1 \
+  --resource-group $rg \
+  --query "ipConfigurations[0].publicIPAddress.id" \
+  --output tsv | xargs az network public-ip show --ids | jq -r '.ipAddress')
+
 #NIC VM DB-Wordpress Client 1
 az network nic create -g $rg -l $location -n $name_nic_prod_back_dbwp_client1 --vnet-name $vnet_spoke_prod_back_name --subnet $subnet_spoke_prod_back_dbwordpress_name
-ip_vm_prod_back_dbwp=$(az network nic show   --g $rg   --name $name_nic_prod_back_dbwp_client1  --query "ipConfigurations[0].privateIPAddress"   -o tsv)
+ip_vm_prod_back_dbwp=$(az network nic show -g $rg --name $name_nic_prod_back_dbwp_client1  --query "ipConfigurations[0].privateIPAddress" -o tsv)
 
+
+
+#### VM
 export WP_DB_NAME="wordpress"
 export WP_DB_USER="wpuser"
 export WP_DB_PASS="Motdepasse123!"
@@ -162,15 +190,18 @@ az vm create \
   --location $location \
   --name $name_vm_prod_back_dbwp_client1 \
   --image Debian:debian-11:11:latest \
-  --size Standard_B1ms \
+  --size Standard_D2s_v5 \
   --admin-username "lotfi" \
   --admin-password "Motdepasse123!" \
   --nics $name_nic_prod_back_dbwp_client1 \
   --os-disk-delete-option Delete \
   --storage-sku Premium_LRS \
-  --custom-data dbwp-cloud-init.txt\
+  --custom-data dbwp-cloud-init.yaml\
   --zone 1
 
+
+###ATTENTION SUPPRESSION SI JAMAIS CA NE FONCTIONNE PAS (POUR REFAIRE)
+az vm delete -g $rg -n $name_vm_prod_back_dbwp_client1 --force-deletion
 
 
 ########################################
@@ -189,20 +220,17 @@ az network nic update \
   --network-security-group $name_nsg_prod_front
 
 
-
 az network nsg rule create \
   --resource-group $rg \
   --nsg-name $name_nsg_prod_front \
-  --name AllowSSHToSubnet \
+  --name AllowHTTPToSubnet \
   --priority 155 \
   --direction Inbound \
   --access Allow \
   --protocol Tcp \
   --source-address-prefixes '*' \
-  --destination-address-prefixes $name_ip_pub_vm_wp_front_temp \
+  --destination-address-prefixes $ip_vm_front_public_temp \
   --destination-port-ranges 80
-
-
 
 ##################### NSG Front Web
 az network nsg create \
@@ -220,26 +248,14 @@ az network nsg rule create \
   --access Allow \
   --protocol Tcp \
   --source-address-prefixes VirtualNetwork \
-  --destination-asgs "*"\
+  --destination-address-prefixes "*"\
   --destination-port-ranges 3306
 
 
-########################################
-#   Création de Bastion 
-########################################
 
-az network vnet subnet create --resource-group $rg \
-															--vnet-name $vnet_hub_name \
-															--name AzureBastionSubnet \
-															--address-prefix $bastion_hub_subnet
-
-az network bastion create --resource-group $rg \
-													--location $location \
-													--name bastion \
-													--public-ip-address $name_ip_pub_bastion \
-									        --sku Standard \
-													--vnet-name $vnet_hub_name \
-													--no-wait	
+#Commande astuces :
+nc -zv <ip> 3306
+mysql -h <ip> -u <username> -p
 
 
 #Firewall
@@ -247,9 +263,9 @@ az network bastion create --resource-group $rg \
 
 
 
-#############
-#
-#############
+####################
+# IDENTITY MANAGED #
+####################
 
 az identity create --resource-group $rg --name wordpress-identity
 
