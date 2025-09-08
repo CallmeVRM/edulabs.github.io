@@ -1,0 +1,46 @@
+{
+    "ruleCollections": [
+        {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "action": {
+                "type": "Allow"
+            },
+            "name": "Wordpress_Prod_spk_to_spk",
+            "priority": 100,
+            "rules": [
+                {
+                    "ruleType": "NetworkRule",
+                    "name": "frontToback",
+                    "ipProtocols": [
+                        "Any"
+                    ],
+                    "sourceAddresses": [
+                        "10.1.1.0/24"
+                    ],
+                    "destinationAddresses": [
+                        "10.2.1.0/24"
+                    ],
+                    "destinationPorts": [
+                        "3306"
+                    ]
+                },
+                {
+                    "ruleType": "NetworkRule",
+                    "name": "backTofront",
+                    "ipProtocols": [
+                        "Any"
+                    ],
+                    "sourceAddresses": [
+                        "10.2.1.0/24"
+                    ],
+                    "destinationAddresses": [
+                        "10.1.1.0/24"
+                    ],
+                    "destinationPorts": [
+                        "80"
+                    ]
+                }
+            ]
+        }
+    ]
+}

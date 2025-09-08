@@ -1,6 +1,9 @@
 #cloud-config
-hostname: wordpress-vm
+hostname: wp-client1
 timezone: Europe/Paris
+fqdn: wp-client1.edulabs.fr
+preserve_hostname: false
+
 
 package_update: true
 package_upgrade: true
