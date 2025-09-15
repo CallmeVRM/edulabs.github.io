@@ -21,7 +21,7 @@ runcmd:
     DB_NAME="wordpress"
     DB_USER="wpuser"
     DB_PASS="Motdepasse123!"
-    DB_HOST="10.2.1.4"
+    DB_HOST="10.100.1.4"
 
     # Download and install WordPress
     curl -O https://wordpress.org/latest.tar.gz

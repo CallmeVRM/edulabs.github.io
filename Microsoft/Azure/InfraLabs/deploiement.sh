@@ -1,3 +1,8 @@
+#https://learn.microsoft.com/fr-fr/azure/firewall/integrate-lb
+#https://learn.microsoft.com/en-us/azure/vpn-gateway/point-to-site-certificate-gateway
+
+
+
 #Spéciale Pluralsight
 rg=$(az group list --query "[].name" --output tsv)
 
@@ -318,13 +323,15 @@ az network vnet subnet create -g $rg \
             -n AzureFirewallManagementSubnet \
             --address-prefixes $fw_mgmt_hub_subnet
 
+
+ A FINALISER 
 #Création d'une policy
 az network firewall policy create \
   --name fw_hub_policy \
   --resource-group $rg \
-  --location $location \
-  -tier Basic \
-  --threat-intel-mode Alert
+  --location $location 
+# --tier Basic \
+#  --threat-intel-mode Alert
 
 az network firewall policy rule-collection-group create \
   --policy-name fw_hub_policy \

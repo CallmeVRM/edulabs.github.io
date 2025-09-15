@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Appli v3+ — Labs</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css">
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <header class="header glass fade-in">
+            <h1><i class="ri-flask-line"></i> Appli v3+ — Dashboard</h1>
+            <div id="userBox" class="userbox"></div>
+        </header>
+
+        <section id="loginSection" class="card glass fade-in">
+            <h2><i class="ri-login-circle-line"></i> Connexion</h2>
+            <form id="loginForm">
+                <label><span>Utilisateur</span>
+                    <input name="username" required />
+                </label>
+                <label><span>Mot de passe</span>
+                    <input name="password" type="password" required />
+                </label>
+                <button type="submit" class="btn-gradient"><i class="ri-key-line"></i> Se connecter</button>
+            </form>
+            <p id="loginMsg" class="msg"></p>
+        </section>
+
+        <section id="labsSection" class="hidden fade-in">
+            <h2><i class="ri-server-line"></i> Mes Labs</h2>
+            <div id="labsGrid" class="grid"></div>
+        </section>
+    </div>
+
+    <template id="labCardTmpl">
+        <div class="card glass hover-rise fade-in">
+            <h3 class="lab-title"></h3>
+            <p class="lab-status"></p>
+            <div class="actions">
+                <button type="button" class="btn-gradient btn-start"><i class="ri-play-fill"></i> Start</button>
+                <button type="button" class="btn-gradient-red btn-stop"><i class="ri-stop-fill"></i> Stop</button>
+                <button type="button" class="btn-gradient btn-open"><i class="ri-external-link-line"></i>
+                    OpenEnv</button>
+            </div>
+            <p class="lab-ip small"></p>
+            <p class="lab-exp small"></p>
+            <p class="lab-msg msg"></p>
+        </div>
+    </template>
+
+    <script src="app.js" type="module"></script>
+</body>
+
+</html>
